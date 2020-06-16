@@ -6,6 +6,9 @@ src/*/build
 **/*.img
 **/*.elf
 
+.project
+.cproject
+
 # gnu global files
 GPATH
 GRTAGS
