@@ -545,9 +545,18 @@ This function just iterates over all characters in a string and sends them one b
 
 **Low efficiency?** Apparently Tx/Rx with busy wait burn lots of CPU cycles for no good. It's fine for our baremetal program -- simple & less error-prone. Production software often do interrupt-driven Rx/Tx. 
 
-### Configure the hardware
 
-**Rpi3**
+### Take it for a spin
+
+<!-- 1. Execute `./build.sh` or `./build.bat` from [src/lesson01](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01) in order to build the kernel. -->
+
+Run `make` to build the kernel. 
+
+#### Rpi3
+
+{xzl: need some clean up...}
+
+**Setup**
 
 The Raspberry Pi startup sequence is the following (simplified):
 
@@ -561,21 +570,11 @@ To be able to run our simple OS, the `config.txt` file should be the following:
 kernel_old=1
 disable_commandline_tags=1
 ```
+
 * `kernel_old=1` specifies that the kernel image should be loaded at address 0.
 * `disable_commandline_tags` instructs the GPU to not pass any command line arguments to the booted image.
 
-**QEMU**
-
-Follow the instructions in [Prerequisites](../Prerequisites.md).
-
-
-### Take it for a spin
-
-<!-- 1. Execute `./build.sh` or `./build.bat` from [src/lesson01](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01) in order to build the kernel. -->
-
-Run `make` to build the kernel. 
-
-#### Rpi3
+**Run**
 
 1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files that be present on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details)
 1. Modify the `config.txt` file as described in the previous section.
@@ -600,6 +599,19 @@ Note that the sequence of steps described above asumes that you have Raspbian in
 Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocumented. For more information about the Raspberry Pi startup sequence, you can refer to some unofficial sources, like [this](https://raspberrypi.stackexchange.com/questions/10442/what-is-the-boot-sequence) StackExchange question or [this](https://github.com/DieterReuter/workshop-raspberrypi-64bit-os/blob/master/part1-bootloader.md) Github repository.
 
 #### QEMU
+
+**Setup**
+
+Follow the instructions in [Prerequisites](../Prerequisites.md).
+
+**Run**
+
+```
+$ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio
+VNC server running on 127.0.0.1:5900
+Hello, world!
+<Ctrl-C>
+```
 
 
 
