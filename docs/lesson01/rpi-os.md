@@ -1,4 +1,4 @@
-## 1.1: Bare-metal "Hello, World!"
+## 1.1: Baremetal HelloWorld
 
 
 
@@ -8,7 +8,7 @@ A minimal, baremetal program that can print "Hello world" via Rpi3's UART.
 
 Understand: 
 
-1. The project structure
+1. The C project structure
 
 2. The use of toolchain
 
@@ -351,7 +351,7 @@ The GPIO can be used to configure the behavior of different GPIO pins. For examp
 
 ![Raspberry Pi GPIO pin numbers](../../images/gpio-numbers.png)
 
-### Walkthrough: Mini UART code ([mini_uart.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/mini_uart.c))
+### Walkthrough: the UART code ([mini_uart.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/mini_uart.c))
 
 The following init code configures pins as UART in/out, sets up UART clock and its modes, etc. 
 
@@ -615,10 +615,12 @@ Hello, world!
 
 
 
-##### Previous Page
+**Previous Page**
 
 [Prerequisites](../../docs/Prerequisites.md)
 
-##### Next Page
+**Next Page**
 
 1.2 [Kernel Initialization: Linux project structure](../../docs/lesson01/linux/project-structure.md)
+
+`
