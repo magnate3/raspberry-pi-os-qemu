@@ -1,12 +1,8 @@
-## 1.1: Baremetal HelloWorld
+# 1.1: Baremetal HelloWorld
 
-
-
-### Objectives
+## Objectives
 
 A minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
-
-Understand: 
 
 1. The C project structure
 
@@ -16,42 +12,36 @@ Understand:
 
 4. Basic knowledge on Rpi3 and its UART hardware
 
+## Roadmap
 
-### Intro
+Create a Makefile project. Add bare minimum boot code. Initialize the UART hardware. Send characters to the UART registers. 
 
-We are going to start our journey in OS development by writing a small, bare-metal "Hello, World" application. I assume that  you have gone through the [Prerequisites](../Prerequisites.md) and have everything ready. If not, now is the time to do this.
-
-Before we move forward, I want to establish a simple naming convention. From the README file you can see that the whole tutorial is divided into lessons. Each lesson consists of individual files that I call "chapters" (right now, you are reading lesson 1, chapter 1.1). A chapter is further divided into "sections" with headings. This naming convention allows me to make references to different parts of the material.
-
-Another thing I want you to pay attention to is that the tutorial contains a lot of source code samples. I'll usually start the explanation by providing the complete code block, and then describe it line by line. 
-
-**Terms** 
+## **Terms** 
 
 1. Strictly speaking, this baremetal program is not a "kernel". We nevertheless call it so for ease of explanation. 
 
 2. "Raspberry Pi" means the actual Rpi3 hardware. "QEMU" means the Rpi3 platform as emulated by QEMU. In case the hardware behaves differently from QEMU, we will explain. 
 
-### Project structure
+## Project structure
 
-The source code of each lesson has the same structure. You can find this lesson's source code [here](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01). Let's briefly describe the main components of this folder:
+The source code of each experiment has the same structure. 
 1. **Makefile** We will use the [make](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) utility to build the kernel. `make`'s behavior is configured by a Makefile, which contains instructions on how to compile and link the source code. 
 1. **src** This folder contains all of the source code.
 1. **include** All of the header files are placed here. 
 
 <!--- 1. **build.sh or build.bat** You'll need these files if you want to build the kernel using Docker. You won't need to have the make utility or the compiler toolchain installed on your laptop. --->
 
-#### Makefile walkthrough
+### Makefile walkthrough
 
-Now let's take a closer look at the project Makefile. The primary purpose of the make utility is to automatically determine what pieces of a program need to be recompiled, and to issue commands to recompile them. If you are not familiar with make and Makefiles, I recommend that you read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article. 
-The Makefile used in the first lesson can be found [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/Makefile). The whole Makefile is listed below:
+If you are not familiar with make and Makefiles, I recommend that you read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article. 
 
-{xzl: Make sure to check out our revised Makefile! To facilitate debugging, we've added the following options: -O0 to turn off any C compiler optimization; -g to include debugging information in kernel8.elf.}
+The complete Makefile: 
 
 ```
 ARMGNU ?= aarch64-linux-gnu
 
-COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
-ASMOPS = -Iinclude 
+COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -O0 -g
+ASMOPS = -Iinclude  -g
 
 BUILD_DIR = build
 SRC_DIR = src
@@ -93,12 +83,14 @@ ASMOPS = -Iinclude
 
 `COPS` and `ASMOPS` are options that we pass to the compiler when compiling C and assembler code, respectively. These options require a short explanation:
 
-* **-Wall** Show all warnings.
+* **-Wall** Show all warnings. A good practice. 
 * **-nostdlib** Don't use the C standard library. Most of the calls in the C standard library eventually interact with the operating system. We are writing a bare-metal program, and we don't have any underlying operating system, so the C standard library is not going to work for us anyway.
 * **-nostartfiles** Don't use standard startup files. Startup files are responsible for setting an initial stack pointer, initializing static data, and jumping to the main entry point. We are going to do all of this by ourselves.
 * **-ffreestanding** A freestanding environment is an environment in which the standard library may not exist, and program startup may not necessarily be at main. The option `-ffreestanding` directs the compiler to not assume that standard functions have their usual definition.
 * **-Iinclude** Search for header files in the `include` folder.
 * **-mgeneral-regs-only**. Use only general-purpose registers. ARM processors also have [NEON](https://developer.arm.com/technologies/neon) registers. We don't want the compiler to use them because they add additional complexity (since, for example, we will need to store the registers during a context switch).
+* **-g** Include debugging info in the resultant ELF binary. 
+* **-O0** Turn off any compiler optimization. For ease of debugging. 
 
 ```
 BUILD_DIR = build
@@ -114,14 +106,11 @@ clean :
     rm -rf $(BUILD_DIR) *.img 
 ```
 
-Next, we define make targets. The first two targets are pretty simple: the `all` target is the default one, and it is executed whenever you type `make` without any arguments (`make` always uses the first target as the default). This target just redirects all work to a different target, `kernel8.img`. 
+### Build targets & rules
 
-> {xzl: kernel8.img vs kernel8.elf?} 
-> **build/kernel8.elf:** Our build outocme -- an ELF file. It contains all code, data, and debugging info. 
-> **kernel8.img:** This is our kernel binary to be loaded to the hardware. The very file name is expected by Rpi3's firmware. Consider it as a raw binary containing code and data. It is NOT an ELF file. 
-> kernel8.img is extracted from kernel8.elf as you can see. 
->
-> More details on them below. 
+The first two targets are pretty simple: the `all` target is the default one, and it is executed whenever you type `make` without any arguments (`make` always uses the first target as the default). This target just redirects all work to a different target, `kernel8.img`. 
+
+> The name "kernel8.img" is mandated by the Rpi3 firmware. The trailing `8` denotes ARMv8 which is a 64-bit architecture. This filename tells the firmware to boot the processor into 64-bit mode.
 
 The `clean` target is responsible for deleting all compilation artifacts and the compiled kernel image.
 
@@ -152,7 +141,7 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 
 The next two lines are a little bit tricky. If you take a look at how we defined our compilation targets for both C and assembler source files, you will notice that we used the `-MMD` parameter. This parameter instructs the `gcc` compiler to create a dependency file for each generated object file. A dependency file defines all of the dependencies for a particular source file. These dependencies usually contain a list of all included headers. We need to include all of the generated dependency files so that make knows what exactly to recompile in case a header changes. 
 
-#### Baking the kernel binaries!
+### Bake the kernel binaries!
 
 ```
 $(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o kernel8.elf  $(OBJ_FILES)
@@ -160,19 +149,24 @@ $(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o kernel8.elf  $(OBJ_FILES)
 
 We use the `OBJ_FILES` array to build the `kernel8.elf` file. We use the linker script `src/linker.ld` to define the basic layout of the resulting executable image (we will discuss the linker script in the next section).
 
+------------------
+
 ```
 $(ARMGNU)-objcopy kernel8.elf -O binary kernel8.img
 ```
 
-`kernel8.elf` is in the [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) format. The problem is that ELF files are designed to be executed by an operating system. To write a bare-metal program, we need to extract all executable and data sections from the ELF file and put them into the `kernel8.img` image. The trailing `8` denotes ARMv8 which is a 64-bit architecture. This filename tells the firmware to boot the processor into 64-bit mode.
+**kernel8.elf vs kernel8.img**
 
-{xzl: the following only applies to Rpi3 hardware. QEMU, which does not implement Rpi3's firmware, does not know config.txt}
+* **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. To execute an ELF program, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our experiment, we do not have such a loader. 
+* **kernel8.img ("kernel image"):** The raw instructions & data as extracted from kernel8.elf. The raw image is to be loaded to memory. Since it's a memory dump (see below), the load is as simple as byte-by-byte copy. 
 
-You can also boot the CPU in the 64-bit mode by using `arm_control=0x200` flag in the `config.txt` file. The RPi OS previously used this method, and you can still find it in some of the exercise answers. However, `arm_control` flag is undocumented and it is preferable to use `kernel8.img` naming convention instead.
+> "`objcopy` can be used to generate a raw binary file by using an output target of ‘binary’ (e.g., use -O binary). When `objcopy` generates a raw binary file, it will essentially produce a memory dump of the contents of the input object file. All symbols and relocation information will be discarded. The memory dump will start at the load address of the lowest section copied into the output file."
 
-#### The linker script
+<!----- **Note: the following only applies to Rpi3 hardware. QEMU, which does not implement Rpi3's firmware, does not know config.txt.** You can also boot the CPU in the 64-bit mode by using `arm_control=0x200` flag in the `config.txt` file. The RPi OS previously used this method, and you can still find it in some of the exercise answers. However, `arm_control` flag is undocumented and it is preferable to use `kernel8.img` naming convention instead. --->
 
-The primary purpose of the linker script is to describe how the sections in the input object files (`_c.o` and `_s.o`) should be mapped into the output file (`.elf`). More information about linker scripts can be found [here](https://sourceware.org/binutils/docs/ld/Scripts.html#Scripts). Now let's take a look at the RPi OS linker script:
+### The linker script
+
+A linker script describes how the sections in the input object files (`_c.o` and `_s.o`) should be mapped into the output file (`.elf`); it also controls the addresses of all program symbols (e.g. functions and variables). More information can be found [here](https://sourceware.org/binutils/docs/ld/Scripts.html#Scripts). Now let's take a look at the RPi OS linker script:
 
 ```
 SECTIONS
@@ -188,31 +182,23 @@ SECTIONS
 }
 ```
 
-After startup, the Raspberry Pi loads `kernel8.img` into memory and starts execution from the beginning of the file. That's why the `.text.boot` section must be first; we are going to put the OS startup code inside this section. 
+After startup, the Rpi3 firmware loads `kernel8.img` into memory 0x0 and starts execution from the beginning of the file. That's why the `.text.boot` section must be first; we are going to put the OS startup code inside this section. QEMU behaves differently: it loads the kernel image at 0x80000. 
 
-> {xzl} Clarification: 
->
-> 1. Rpi3: the firmware (which runs on GPU) loads kernel8.img to memory. 
-> 2. QEMU loads & executes the kernel at 0x80000 instead of 0x0. (Why?) You will have to tweak the linker script to update the start address. How? 
+>  Q: How to tweak the linker script to update the start address?
 
-The `.text`, `.rodata`, and `.data` sections contain kernel-compiled instructions, read-only data, and normal data––there is nothing special to add about them.
-The `.bss` section contains data that should be initialized to 0. By putting such data in a separate section, the compiler can save some space in the ELF binary––only the section size is stored in the ELF header, but the section itself is omitted. 
+The `.text`, `.rodata`, and `.data` sections contain kernel instructions, read-only data, and global data with init values. The `.bss` section contains data that should be initialized to 0. By putting such data in a separate section, the compiler can save some space in the ELF binary––only the section size is stored in the ELF header, but the section content is omitted. 
 
-After loading the image into memory, we must initialize the `.bss` section to 0; that's why we need to record the start and end of the section (hence the `bss_begin` and `bss_end` symbols) and align the section so that it starts at an address that is a multiple of 8. If the section is not aligned, it would be more difficult to use the `str` instruction to store 0 at the beginning of the `bss` section because the `str` instruction can be used only with 8-byte-aligned addresses.
+After booting up, our kernel initializes the `.bss` section to 0; that's why we need to record the start and end of the section (hence the `bss_begin` and `bss_end` symbols) and align the section so that it starts at an address that is a multiple of 8. This eases kernel programming because the `str` instruction can be used only with 8-byte-aligned addresses.
 
-> ** Who is responsible for cleaning up BSS?** Whoever loads the binary should do. Our kernel will do so (see below). On some other platforms,  bootloaders (uboot) that can parse & load ELF files should do so. 
-
-### Walkthrough: the kernel code 
+### Kernel startup
 
 #### The kernel binary 
 
 *TBD*
 
-#### boot.S: Booting the kernel
+#### Booting the kernel
 
-> We will look at some ARM64 assembly below. It's fun. Refer to our ARM64 cheatsheet as needed. 
-
-Now it is time to take a look at the [boot.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/boot.S) file. This file contains the kernel startup code:
+boot.S contains the kernel startup code:
 
 ```
 #include "mm.h"
@@ -252,9 +238,11 @@ _start:
     b    proc_hang
 ```
 
-The first thing this function does is check the processor ID. The Raspberry Pi 3 has four core processors, and after the device is powered on, each core begins to execute the same code. However, we don't want to work with four cores; we want to work only with the first one and put all of the other cores in an endless loop. This is exactly what the `_start` function is responsible for. It gets the processor ID from the [mpidr_el1](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0500g/BABHBJCI.html) system register. 
+Rpi3 has 4 cores, and after the device is powered on, each core begins to execute the same code. Our kernel only works with the first one and put all of the other cores in an endless loop. This is exactly what the `_start` function is responsible for. It gets the processor ID from the [mpidr_el1](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0500g/BABHBJCI.html) system register. 
 
-> It may make more sense to put these cores in deep sleep using ``wfi``. How? 
+> Q: It may make more sense to put core 1-3 in deep sleep using ``wfi``. How? 
+
+#### Kernel memory layout
 
 If the current processor ID is 0, then execution is transferred to the `master` function:
 
@@ -273,11 +261,11 @@ Here, we clean the `.bss` section by calling `memzero`. We will define this func
     bl    kernel_main
 ```
 
-{xzl: need a figure}
+<img src="figures/mem-0.png" alt="fig-mem" style="zoom:20%;" />
 
 After cleaning the `.bss` section, the kernel initializes the stack pointer and pass execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. Our kernel's stack won't grow very large and the image itself is tiny, so `4MB` is more than enough for us. 
 
-**Some ARM64 instructions used** 
+**Aside: Some ARM64 instructions used** 
 
 For those of you who are not familiar with ARM assembler syntax, let me quickly summarize the instructions that we have used:
 
@@ -312,7 +300,7 @@ void kernel_main(void)
 
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
-### A bit about Rpi3 
+### A bit about Rpi3 hardware
 
 Now we are going to dig into something specific to the Raspberry Pi. Before we begin, I recommend that you download the [BCM2837 ARM Peripherals manual](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). BCM2837 is a board that is used by the Raspberry Pi 3 Models B, and B+. Sometime in our discussion, I will also mention BCM2835 and BCM2836 - those are names of the board used in older versions of the Raspberry Pi.  
 
@@ -449,7 +437,7 @@ retain their previous state.
     put32(GPPUDCLK0,0);
 ```
 
-#### Init: Initializing the Mini UART
+#### Init: Mini UART
 
 Now our Mini UART is connected to the GPIO pins, and the pins are configured. The rest of the `uart_init` function is dedicated to Mini UART initialization. 
 
@@ -504,7 +492,7 @@ The `system_clock_freq` is 250 MHz, so we can easily calculate the value of `bau
 ```
 After this line is executed, the Mini UART is ready for work!
 
-#### Sending data using the Mini UART
+#### Sending data over UART
 
 After the Mini UART is ready, we can try to use it to send and receive some data. To do this, we can use the following two functions:
 
