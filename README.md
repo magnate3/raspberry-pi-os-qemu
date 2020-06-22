@@ -1,70 +1,92 @@
-# Learning operating system development using Linux kernel and Raspberry Pi
+# A tiny, modern kernel for Raspberry Pi 3 built in small increments
 
-This repository contains a step-by-step guide that teaches how to create a simple operating system (OS) kernel from scratch. I call this OS Raspberry Pi OS or just RPi OS. The RPi OS source code is largely based on [Linux kernel](https://github.com/torvalds/linux), but the OS has very limited functionality and supports only [Raspberry PI 3](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/). 
+## What is it: 
 
-Each lesson is designed in such a way that it first explains how some kernel feature is implemented in the RPi OS, and then it tries to demonstrate how the same functionality works in the Linux kernel. Each lesson has a corresponding folder in the [src](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src) directory, which contains a snapshot of the OS source code at the time when the lesson had just been completed. This allows the introduction of new concepts gracefully and helps readers to follow the evolution of the RPi OS. Understanding this guide doesn't require any specific OS development skills.
+A tiny kernel that is incrementally built for OS education. 
 
-For more information about project goals and history, please read the [Introduction](docs/Introduction.md). The project is still under active development, if you are willing to participate - please read the [Contribution guide](docs/Contributions.md).
+Through a series of exps, we will core kernel features in small doses. 
 
-<p>
-  <a href="https://twitter.com/RPi_OS" target="_blank">
-    <img src="https://raw.githubusercontent.com/s-matyukevich/raspberry-pi-os/master/images/twitter.png" alt="Follow @RPi_OS on twitter" height="34" >
-  </a>
+Each experiment is a self-contained and can run on Rpi3 hardware and QEMU. 
 
-  <a href="https://www.facebook.com/groups/251043708976964/" target="_blank">
-    <img src="https://raw.githubusercontent.com/s-matyukevich/raspberry-pi-os/master/images/facebook.png" alt="Follow Raspberry Pi OS on facebook" height="34" >
-  </a>
+## Rationale
 
-  <a href="https://join.slack.com/t/rpi-os/shared_invite/enQtNDQ1NTg2ODc1MDEwLWVjMTZlZmMyZDE4OGEyYmMzNTY1YjljZjU5YWI1NDllOWEwMjI5YzVkM2RiMzliYjEzN2RlYmUzNzBiYmQyMjY" target="_blank">
-    <img src="https://raw.githubusercontent.com/s-matyukevich/raspberry-pi-os/master/images/slack.png" alt="Join Raspberry Pi OS in slack" height="34" >
-  </a>
+The kernel must run on cheap & modern hardware. 
 
-  <a href="https://www.producthunt.com/upcoming/raspberry-pi-os" target="_blank">
-    <img src="https://raw.githubusercontent.com/s-matyukevich/raspberry-pi-os/master/images/subscribe.png" alt="Subscribe for updates" height="34" >
-  </a>
-</p>
+Crucial kernel functions to implement: 
+
+* protection modes
+
+* interrupt handling
+
+* preemptive scheduling
+
+* virtual memory 
+
+Experimenting with these features is not easy with commodity kernels due to their complexity. 
+
+## Goals
+
+**Primary:** 
+
+* Learning by doing: the core concepts of a modern OS kernel. 
+
+* Experience is crucial: programming & debugging experience at the hardware/software boundary
+
+* Dare to plumb: working with baremetal hardware: CPU protection modes, registers, IO, MMU, etc.
+
+**Secondary:**
+
+* ARMv8 programming. ARM is everywhere. 
+
+* Working with C and assembly 
+* Cross-platform development 
+
+**Non-goals:**
+
+* Non-core or advanced functions of OS kernel, e.g. filesystem or power management, which shall be taught by experimenting with commodity OS. 
+
+* Rpi3-specific hardware details. Rpi3 and its BCM SoC is notoriously unfriendly to kernel hackers. 
+
+* Internals of commodity kernels. 
+
+## Credits
+
+Derived from the RPi OS project and its tutorials, which is said to modeled after the [Linux kernel](https://github.com/torvalds/linux). 
+
+## Key docs
+
+Board manual: Rpi3 board pinout
+
+SoC manual: Bcm
+
+ARM64: 
+
+<!---- to complete --->
 
 ## Table of Contents
 
+
 * **[Introduction](docs/Introduction.md)**
-* **[Contribution guide](docs/Contributions.md)**
-* **[Prerequisites](docs/Prerequisites.md)**
-* **Lesson 1: Kernel Initialization** 
-  * 1.1 [Introducing RPi OS, or bare metal "Hello, world!"](docs/lesson01/rpi-os.md)
-  * Linux
-    * 1.2 [Project structure](docs/lesson01/linux/project-structure.md)
-    * 1.3 [Kernel build system](docs/lesson01/linux/build-system.md) 
-    * 1.4 [Startup sequence](docs/lesson01/linux/kernel-startup.md)
-  * 1.5 [Exercises](docs/lesson01/exercises.md)
-* **Lesson 2: Processor initialization**
-  * 2.1 [RPi OS](docs/lesson02/rpi-os.md)
-  * 2.2 [Linux](docs/lesson02/linux.md)
-  * 2.3 [Exercises](docs/lesson02/exercises.md)
-* **Lesson 3: Interrupt handling**
-  * 3.1 [RPi OS](docs/lesson03/rpi-os.md)
-  * Linux
-    * 3.2 [Low level exception handling](docs/lesson03/linux/low_level-exception_handling.md) 
-    * 3.3 [Interrupt controllers](docs/lesson03/linux/interrupt_controllers.md)
-    * 3.4 [Timers](docs/lesson03/linux/timer.md)
-  * 3.5 [Exercises](docs/lesson03/exercises.md)
-* **Lesson 4: Process scheduler**
-  * 4.1 [RPi OS](docs/lesson04/rpi-os.md) 
-  * Linux
-    * 4.2 [Scheduler basic structures](docs/lesson04/linux/basic_structures.md)
-    * 4.3 [Forking a task](docs/lesson04/linux/fork.md)
-    * 4.4 [Scheduler](docs/lesson04/linux/scheduler.md)
-  * 4.5 [Exercises](docs/lesson04/exercises.md)
-* **Lesson 5: User processes and system calls** 
-  * 5.1 [RPi OS](docs/lesson05/rpi-os.md) 
-  * 5.2 [Linux](docs/lesson05/linux.md)
-  * 5.3 [Exercises](docs/lesson05/exercises.md)
-* **Lesson 6: Virtual memory management**
-  * 6.1 [RPi OS](docs/lesson06/rpi-os.md) 
-  * 6.2 Linux (In progress)
-  * 6.3 [Exercises](docs/lesson06/exercises.md)
-* **Lesson 7: Signals and interrupt waiting** (To be done)
-* **Lesson 8: File systems** (To be done)
-* **Lesson 9: Executable files (ELF)** (To be done)
-* **Lesson 10: Drivers** (To be done)
-* **Lesson 11: Networking** (To be done)
+
+0. **[Platform setup](docs/lesson01/rpi-os.md)**
+1. **Helloworld from Baremetal** 
+      * [Power on + UART bring up](docs/lesson01/rpi-os.md)
+      * [Simplifying dev workflow](docs/lesson01/workflow)
+      * [Exercises](docs/lesson01/exercises.md)
+1. **Exception elevated**
+      * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
+      * [Exercises](docs/lesson02/exercises.md)
+1. **Kernel heartbeats on**
+      * [Interrupt handling](docs/lesson03/rpi-os.md)
+      * [Exercises](docs/lesson03/exercises.md)
+1. **Process scheduler**
+      * [A. Cooperative](docs/lesson04a/rpi-os.md) 
+      * [B. Preemptive](docs/lesson04b/rpi-os.md) 
+      * [Exercises](docs/lesson04/exercises.md)
+1. **A world of two lands** 
+      * [User processes and system calls](docs/lesson05/rpi-os.md) 
+      * [Exercises](docs/lesson05/exercises.md)
+1. **Into virtual **
+      * [Virtual memory management](docs/lesson06/rpi-os.md) 
+      * [Exercises](docs/lesson06/exercises.md)
 

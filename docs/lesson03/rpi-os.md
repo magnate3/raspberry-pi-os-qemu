@@ -8,9 +8,8 @@ A baremetal program prints out messages as driven by periodic interrupts from a 
 
 2. Handling interrupts
 
-3. Experiment with hardware timers
+3. Program hardware timers
 
-   <!--- add roadmap--->
 
 **Terms**
 
@@ -369,19 +368,11 @@ Here we first update compare register so that that next interrupt will be genera
 
 
 
-### Why interrupts 
 
-<!--- not very useful --->
-
-From the lesson 1, we already know how to communicate with hardware. However, most of the time the pattern of communication is not that simple. Usually, this pattern is asynchronous: we send some command to a device, but it doesn't respond immediately. Instead, it notifies us when the work is completed. Such asynchronous notifications are called "interrupts" because they interrupt normal execution flow and force the processor to execute an "interrupt handler".
 
 ### Why timer
 
 There is one device that is particularly useful in operating system development: system timer. It is a device that can be configured to periodically interrupt a processor with some predefined frequency. One particular application of the timer that it is used in the process scheduling. A scheduler needs to measure for how long each process has been executed and use this information to select the next process to run. This measurement is based on timer interrupts.
-
-
-
-
 
 
 

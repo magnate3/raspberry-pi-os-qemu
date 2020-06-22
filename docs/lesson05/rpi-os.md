@@ -2,7 +2,7 @@
 
 ## Objectives
 
-Our kernel is evolving from an "embedded" kernel which often lacks protection to a multiprogrammed kernel. 
+Our kernel is evolving from an "embedded" kernel which often lacks user/kernel separation to a multiprogrammed kernel. 
 
 * Run processes in EL0
 * Add the syscall mechanism

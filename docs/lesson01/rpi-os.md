@@ -302,50 +302,58 @@ This function is one of the simplest in the kernel. It works with the `Mini UART
 
 ### A bit about Rpi3 hardware
 
-Now we are going to dig into something specific to the Raspberry Pi. Before we begin, I recommend that you download the [BCM2837 ARM Peripherals manual](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). BCM2837 is a board that is used by the Raspberry Pi 3 Models B, and B+. Sometime in our discussion, I will also mention BCM2835 and BCM2836 - those are names of the board used in older versions of the Raspberry Pi.  
+The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 
-**Working with memory-mapped IO** 
+> The SoC for Rpi4 seems better for kernel hacking. 
 
-Before we proceed to the implementation details, I want to share some basic concepts on how to work with memory-mapped devices. BCM2837 is a simple [SOC (System on a chip)](https://en.wikipedia.org/wiki/System_on_a_chip) board. In such a board, access to all devices is performed via memory-mapped registers. The Raspberry Pi 3 reserves the memory above address `0x3F000000` for devices. To activate or configure a particular device, you need to write some data in one of the device's registers. A device register is just a 32-bit region of memory. The meaning of each bit in each device register is described in the `BCM2837 ARM Peripherals` manual. Take a look at section 1.2.3 ARM physical addresses in the manual and the surrounding documentation for more context on why we use `0x3F000000` as a base address (even though `0x7E000000` is used throughout the manual).
+#### Memory-mapped IO
+
+On ARM-based SoCs, access to all devices is performed via memory-mapped registers. The Rpi3 SoC reserves physical memory address `0x3F000000` for IO devices. To configure a particular device, software reads/writes device registers. A device register is just a 32-bit region of memory. The meaning of each bit in each IO register is described in the SoC manual. 
+
+<!---- Take a look at section 1.2.3 ARM physical addresses in the SoC manual and the surrounding documentation for more context on why we use `0x3F000000` as a base address (even though `0x7E000000` is used throughout the manual). ---->
+
+> The term "device" is heavily overloaded in many tech docs. Sometimes it means a board, e.g. "an Rpi3 device"; sometimes it means an IO peripheral, e.g. "UART device". We will be explicit. 
 
 #### UART
 
-From the `kernel_main` function, you can guess that we are going to work with a Mini UART device. UART stands for [Universal asynchronous receiver-transmitter](https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter). This device is capable of converting values stored in one of its memory mapped registers to a sequence of high and low voltages. This sequence is passed to your computer via the `TTL-to-serial cable` and is interpreted by your terminal emulator (e.g. PuTTY on Windows). 
+UART is a simple character device allowing software to send out text characters to a different machine. If you do not care about performance, UART requires very minimum software code. Therefore, it is often the first few IO devices to bring up when we build system software for a new machine. Only with UART meaning debugging is possible. (JTAG is another option which however requires more complex setup).
+
+In the simplest form, software writes ascii values to UART registers. The UART device converts written values to a sequence of high and low voltages on wire. This sequence is transmitted to your via the `TTL-to-serial cable` and is interpreted by your terminal emulator (e.g. PuTTY on Windows). 
+
+Rpi3 has the two UART devices. Oddly enough, they are different. 
 
 | Name  | Type      | Comments                                   |
 | :---- | :-------- | ------------------------------------------ |
 | UART0 | PL011     | Secondary, intended as Bluetooth connector |
 | UART1 | mini UART | Primary, intended as debug console         |
 
-UART1/Mini UART: easier to program; limited performance/functionalities. That's fine for our goal. For specification of the Mini UART registers: page 8 of the `BCM2837 ARM Peripherals` manual. 
+UART1/Mini UART: easier to program; limited performance/functionalities. That's fine for our goal. For specification of the Mini UART registers: see page 8 of the SoC manual. 
 
-UART0/PL011: richer functions. Yet one needs to configure the board clock by talking to the GPU firmware. We won't do that at this time. see [Example code](https://github.com/bztsrc/raspi3-tutorial/tree/master/05_uart0). 
+UART0/PL011: richer functions; higher speed. Yet one needs to configure the board clock by talking to the GPU firmware. We won't do that. see [Example code](https://github.com/bztsrc/raspi3-tutorial/tree/master/05_uart0) if you are interested. 
 
 <!--- A Raspberry Pi has two UARTs: Mini UART and PL011 UART. In this tutorial, we are going to work only with the first one, because it is simpler. There is, however, an optional [exercise](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/docs/lesson01/exercises.md) that shows how to work with PL011 UART. -->
 
-More about Raspberry Pi UARTs: see the [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
-
-**Connection**
-
-![rpi3 serial](https://developer.android.com/things/images/raspberrypi-console.png)
+The above information is enough. More about Raspberry Pi UARTs: see the [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
 
 #### GPIO
 
-Another device that you need to familiarize yourself with is the GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIOs are responsible for controlling `GPIO pins`. You should be able to easily recognize them in the image below:
+Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIO provides a bunch of registers. Each bit in such a register corresponds to a pin on the Rpi3 board. By writing 1 or 0 to register bits, software can control the output voltage on the pins, e.g. for turning on/off LEDs connected to such pins. Reading is done in a similar fashion. The picture below shows GPIO pin headers populated on Rpi3. 
 
-![Raspberry Pi GPIO pins](../../images/gpio-pins.jpg)
+<img src="../../images/gpio-pins.jpg" alt="Raspberry Pi GPIO pins" style="zoom: 33%;" />
+
+An SoC often has limited number of pins. Software can control the use of these pins, e.g. for GPIO or for UART. Software does so by writing to specific memory-mapped registers. 
 
 The GPIO can be used to configure the behavior of different GPIO pins. For example, to be able to use the Mini UART, we need to activate pins 14 and 15 and set them up to use this device. The image below illustrates how numbers are assigned to the GPIO pins:
 
-![Raspberry Pi GPIO pin numbers](../../images/gpio-numbers.png)
+<img src="../../images/gpio-numbers.png" alt="Raspberry Pi GPIO pin numbers" style="zoom: 50%;" />
 
 ### Walkthrough: the UART code ([mini_uart.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/mini_uart.c))
 
-The following init code configures pins as UART in/out, sets up UART clock and its modes, etc. 
+The following init code configures pin 14 & 15 as UART in/out, sets up UART clock and its modes, etc. 
 
-> Much of the init code is irrelevant to QEMU. Since QEMU emulates the UARTs, it can dump whatever our kernel writes to the emulated UART registers to stdio. Example: ``qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio``
+> Much of the UART init code is irrelevant to QEMU. Since QEMU "emulates" the UARTs, it can dump whatever our kernel writes to the emulated UART registers to stdio. Example: ``qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio``
 >
-> The first -serial means UART0 which we do not program; the second -serial is directed to stdio. 
+> The first -serial means UART0 which we do not touch; the second -serial means we direct UART1 to stdio. 
 
 ```
 void uart_init ( void )
@@ -376,15 +384,17 @@ void uart_init ( void )
 }
 ```
 
-Here, we use the two functions `put32` and `get32`. Those functions are very simple; they allow us to read and write some data to and from a 32-bit register. You can take a look at how they are implemented in [utils.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/utils.S). `uart_init` is one of the most complex and important functions in this lesson, and we will continue to examine it in the next three sections.
+Here, we use the two functions `put32` and `get32`. Those functions are very simple -- read and write some data to and from a 32-bit register. You can take a look at how they are implemented in [utils.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/utils.S). `uart_init` is one of the most complex and important functions in this lesson, and we will continue to examine it in the next three sections.
 
 #### Init: GPIO alternative function selection 
 
-First, we need to activate the GPIO pins. Most of the pins can be used with different devices, so before using a particular pin, we need to select the pin's `alternative function`. An `alternative function` is just a number from 0 to 5 that can be set for each pin and configures which device is connected to the pin. You can see the list of all available GPIO alternative functions in the image below (the image is taken from page 102 of `BCM2837 ARM Peripherals` manual):
+First, we need to activate the GPIO pins. Most of the pins can be used with different IO devices. So before using a particular pin, we need to select the pin's alternative function,  a number from 0 to 5 that can be set for each pin and configures which IO device is virtually "connected" to the pin. 
+
+See the list of all available GPIO alternative functions in the image below (taken from page 102 of the SoC manual)
 
 ![Raspberry Pi GPIO alternative functions](../../images/alt.png?raw=true)
 
-Here you can see that pins 14 and 15 have the TXD1 and RXD1 alternative functions available. This means that if we select alternative function number 5 for pins 14 and 15, they will be used as a Mini UART Transmit Data pin and Mini UART Receive Data pin, respectively. The `GPFSEL1` register is used to control alternative functions for pins 10-19. The meaning of all the bits in those registers is shown in the following table (page 92 of `BCM2837 ARM Peripherals` manual):
+Here you can see that pins 14 and 15 have the TXD1 and RXD1 alternative functions available. This means that if we select alternative function number 5 for pins 14 and 15, they will be used as a Mini UART Transmit Data pin and Mini UART Receive Data pin, respectively. The `GPFSEL1` register is used to control alternative functions for pins 10-19. The meaning of all the bits in those registers is shown in the following table (page 92 of the SoC manual):
 
 ![Raspberry Pi GPIO function selector](../../images/gpfsel1.png?raw=true)
 
@@ -403,13 +413,13 @@ So now you know everything you need to understand the following lines of code th
 
 #### Init: GPIO pull-up/down & how we disable it
 
-When you work with Raspberry Pi GPIO pins, you will often encounter terms such as pull-up/pull-down. These concepts are explained in great detail in [this](https://grantwinney.com/using-pullup-and-pulldown-resistors-on-the-raspberry-pi/) article. For those who are too lazy to read the whole article, I will briefly explain the pull-up/pull-down concept.
+When working with GPIO pins, you will often encounter terms such as pull-up/pull-down. These concepts are explained in great detail in [this](https://grantwinney.com/using-pullup-and-pulldown-resistors-on-the-raspberry-pi/) article. For those who are too lazy to read the whole article, I will briefly explain the pull-up/pull-down concept.
 
 If you use a particular pin as input and don't connect anything to this pin, you will not be able to identify whether the value of the pin is 1 or 0. In fact, the device will report random values. The pull-up/pull-down mechanism allows you to overcome this issue. If you set the pin to the pull-up state and nothing is connected to it, it will report `1` all the time (for the pull-down state, the value will always be 0). In our case, we need neither the pull-up nor the pull-down state, because both the 14 and 15 pins are going to be connected all the time. 
 
 **The pin state is preserved even after a reboot, so before using any pin, we always have to initialize its state.** There are three available states: pull-up, pull-down, and neither (to remove the current pull-up or pull-down state), and we need the third one.
 
-Switching between pin states is not a very simple procedure because it requires physically toggling a switch on the electric circuit. This process involves the `GPPUD` and `GPPUDCLK` registers and is described on page 101 of the `BCM2837 ARM Peripherals` manual. I copied the description here:
+Switching between pin states is not a very simple procedure because it requires physically toggling a switch on the electric circuit. This process involves the `GPPUD` and `GPPUDCLK` registers and is described on page 101 of the SoC manual:
 
 ```
 The GPIO Pull-up/down Clock Registers control the actuation of internal pull-downs on
@@ -458,30 +468,43 @@ Let's examine this code snippet line by line.
 ```
 This line enables the Mini UART. We must do this in the beginning, because this also enables access to all the other Mini UART registers.
 
+-------------------
+
 ```
     put32(AUX_MU_CNTL_REG,0);               //Disable auto flow control and disable receiver and transmitter (for now)
 ```
 Here we disable the receiver and transmitter before the configuration is finished. We also permanently disable auto-flow control because it requires us to use additional GPIO pins, and the TTL-to-serial cable doesn't support it. For more information about auto-flow control, you can refer to [this](http://www.deater.net/weave/vmwprod/hardware/pi-rts/) article.
 
+--------------------------------------
+
 ```
     put32(AUX_MU_IER_REG,0);                //Disable receive and transmit interrupts
 ```
-It is possible to configure the Mini UART to generate a processor interrupt each time new data is available. We are going to start working with interrupts in lesson 3, so for now, we will just disable this feature.
+It is possible to configure the Mini UART to generate a processor interrupt each time new data is available. We want to be as simple as possible. So for now, we will just disable this feature.
+
+-------------------
 
 ```
     put32(AUX_MU_LCR_REG,3);                //Enable 8 bit mode
 ```
 Mini UART can support either 7- or 8-bit operations. This is because an ASCII character is 7 bits for the standard set and 8 bits for the extended. We are going to use 8-bit mode. 
 
+-------------------
+
 ```
     put32(AUX_MU_MCR_REG,0);                //Set RTS line to be always high
 ```
 The RTS line is used in the flow control and we don't need it. Set it to be high all the time.
+
+-------------------
+
 ```
     put32(AUX_MU_BAUD_REG,270);             //Set baud rate to 115200
 ```
 The baud rate is the rate at which information is transferred in a communication channel. “115200 baud” means that the serial port is capable of transferring a maximum of 115200 bits per second. The baud rate of your Raspberry Pi mini UART device should be the same as the baud rate in your terminal emulator. 
+
 The Mini UART calculates baud rate according to the following equation:
+
 ```
 baudrate = system_clock_freq / (8 * ( baudrate_reg + 1 )) 
 ```
@@ -517,7 +540,10 @@ char uart_recv ( void )
 ```
 
 Both of the functions start with an infinite loop, the purpose of which is to verify whether the device is ready to transmit or receive data. We are using  the `AUX_MU_LSR_REG` register to do this. Bit zero, if set to 1, indicates that the data is ready; this means that we can read from the UART. Bit five, if set to 1, tells us that the transmitter is empty, meaning that we can write to the UART.
+
 Next, we use `AUX_MU_IO_REG` to either store the value of the transmitted character or read the value of the received character.
+
+-------------------
 
 We also have a very simple function that is capable of sending strings instead of characters:
 
