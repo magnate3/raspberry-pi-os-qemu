@@ -1,6 +1,4 @@
-# Prerequisites
-
-[TOC]
+# Sharpen your tools
 
 ## About the docs
 
@@ -37,7 +35,7 @@ aarch64-linux-gnu-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
 
 ## Platform Setup 
 
-### The real hardware approach
+### Approach 1: the real hardware 
 
 #### Check list
 
@@ -123,8 +121,6 @@ qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio
 
 Copy kernel8.img to the SD card. Eject the SD card from PC. Plug the SD to Rpi3. Make sure the serial connection is good and terminal emulator on your PC is ready. Power cycle Rpi3. You should see something like: 
 
-
-
 ![serial](figures/serial.png)
 
 (Your serial number may be different)
@@ -136,7 +132,7 @@ Strictly speaking, Docker is not a required dependency. It is just convenient to
 (https://docs.docker.com/engine/installation/)  If for some reasons you want to avoid using Docker, you can install the [make utility](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) as well as  `aarch64-linux-gnu` toolchain. If you are using Ubuntu you just need to install `gcc-aarch64-linux-gnu` and `build-essential` packages.
 -->
 
-### The QEMU approach 
+### Approach 2: QEMU 
 
 Need QEMU (>v2.12). Newer version is likely fine. The following shows the default QEMU coming with Ubuntu 18.04 is too old. 
 

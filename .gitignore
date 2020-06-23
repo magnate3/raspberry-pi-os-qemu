@@ -6,6 +6,8 @@ src/*/build
 **/*.img
 **/*.elf
 
+*.pdf
+
 .project
 .cproject
 

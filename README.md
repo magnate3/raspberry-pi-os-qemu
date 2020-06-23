@@ -12,6 +12,8 @@ Each experiment is a self-contained and can run on Rpi3 hardware and QEMU.
 
 The kernel must run on cheap & modern hardware. 
 
+Showing the evolution path is important. On the path, each version must be runnable. 
+
 Crucial kernel functions to implement: 
 
 * protection modes
@@ -22,7 +24,7 @@ Crucial kernel functions to implement:
 
 * virtual memory 
 
-Experimenting with these features is not easy with commodity kernels due to their complexity. 
+Experimenting with these features is difficult with commodity kernels due to their complexity. 
 
 ## Goals
 
