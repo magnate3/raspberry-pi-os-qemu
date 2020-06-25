@@ -12,16 +12,13 @@ Each experiment is a self-contained and can run on Rpi3 hardware and QEMU.
 
 The kernel must run on cheap & modern hardware. 
 
-Showing the evolution path is important. On the path, each version must be runnable. 
+Showing the evolution path is important. Along the path, each version must be runnable. 
 
 Crucial kernel functions to implement: 
 
 * protection modes
-
 * interrupt handling
-
 * preemptive scheduling
-
 * virtual memory 
 
 Experimenting with these features is difficult with commodity kernels due to their complexity. 
@@ -31,24 +28,19 @@ Experimenting with these features is difficult with commodity kernels due to the
 **Primary:** 
 
 * Learning by doing: the core concepts of a modern OS kernel. 
-
 * Experience is crucial: programming & debugging experience at the hardware/software boundary
-
 * Dare to plumb: working with baremetal hardware: CPU protection modes, registers, IO, MMU, etc.
 
 **Secondary:**
 
-* ARMv8 programming. ARM is everywhere. 
-
+* ARMv8 programming. 
 * Working with C and assembly 
 * Cross-platform development 
 
 **Non-goals:**
 
 * Non-core or advanced functions of OS kernel, e.g. filesystem or power management, which shall be taught by experimenting with commodity OS. 
-
 * Rpi3-specific hardware details. Rpi3 and its BCM SoC is notoriously unfriendly to kernel hackers. 
-
 * Internals of commodity kernels. 
 
 ## Credits
@@ -68,23 +60,21 @@ ARM64:
 ## Table of Contents
 
 
-* **[Introduction](docs/Introduction.md)**
-
-0. **[Platform setup](docs/lesson01/rpi-os.md)**
-1. **Helloworld from Baremetal** 
+0. **[Sharpen your tools](docs/lesson00/rpi-os.md)**
+1. **Helloworld from baremetal** 
       * [Power on + UART bring up](docs/lesson01/rpi-os.md)
       * [Simplifying dev workflow](docs/lesson01/workflow)
       * [Exercises](docs/lesson01/exercises.md)
 1. **Exception elevated**
       * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
       * [Exercises](docs/lesson02/exercises.md)
-1. **Kernel heartbeats on**
+1. **Heartbeats on**
       * [Interrupt handling](docs/lesson03/rpi-os.md)
       * [Exercises](docs/lesson03/exercises.md)
 1. **Process scheduler**
       * [A. Cooperative](docs/lesson04a/rpi-os.md) 
       * [B. Preemptive](docs/lesson04b/rpi-os.md) 
-      * [Exercises](docs/lesson04/exercises.md)
+      * [Exercises](docs/lesson04a/exercises.md)
 1. **A world of two lands** 
       * [User processes and system calls](docs/lesson05/rpi-os.md) 
       * [Exercises](docs/lesson05/exercises.md)
