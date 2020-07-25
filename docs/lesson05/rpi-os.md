@@ -1,12 +1,16 @@
-# 5.1: User processes and system calls
+# User processes and system calls
 
 ## Objectives
+
+
 
 Our kernel is evolving from an "embedded" kernel which often lacks user/kernel separation to a multiprogrammed kernel. 
 
 * Run processes in EL0
 * Add the syscall mechanism
 * Implement a few basic syscalls
+
+<img src="../lesson06/figures/screen.gif" style="zoom: 67%;" />
 
 ## Roadmap
 

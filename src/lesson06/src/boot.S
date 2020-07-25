@@ -18,9 +18,28 @@ proc_hang:
 master:
 	ldr	x0, =SCTLR_VALUE_MMU_DISABLED
 	msr	sctlr_el1, x0		
+	
+	mrs x0, CurrentEL
+  lsr x0, x0, #2
+	cmp x0, #3
+	beq el3
 
-	ldr	x0, =HCR_VALUE
+//	ldr	x0, =HCR_VALUE
+//	msr	hcr_el2, x0
+	mrs	x0, hcr_el2
+	orr	x0, x0, #(1<<31)
 	msr	hcr_el2, x0
+
+	mov 	x0, #SPSR_VALUE
+	msr	spsr_el2, x0
+
+	adr	x0, el1_entry
+	msr	elr_el2, x0
+	eret
+
+el3:
+  ldr x0, =HCR_VALUE
+  msr hcr_el2, x0
 
 	ldr	x0, =SCR_VALUE
 	msr	scr_el3, x0
@@ -39,6 +58,12 @@ el1_entry:
 	sub	x1, x1, x0
 	bl 	memzero
 
+#ifdef USE_QEMU
+	bl	__create_idmap
+	adrp	x0, idmap_dir
+	msr	ttbr0_el1, x0
+#endif
+
 	bl 	__create_page_tables
 
 	mov	x0, #VA_START			
@@ -52,7 +77,6 @@ el1_entry:
 
 	ldr	x0, =(MAIR_VALUE)
 	msr	mair_el1, x0
-
 
 	ldr	x2, =kernel_main
 
@@ -89,6 +113,27 @@ el1_entry:
 	cmp	\start, \end
 	b.ls	9999b
 	.endm
+
+#ifdef USE_QEMU
+__create_idmap:
+	mov	x29, x30
+	
+	adrp	x0, idmap_dir
+	mov	x1, #PG_DIR_SIZE
+	bl	memzero
+
+	adrp	x0, idmap_dir
+	mov	x1, xzr
+	create_pgd_entry	x0, x1, x2, x3
+
+	mov	x1, xzr
+	mov	x2, xzr
+	ldr	x3, =(PHYS_MEMORY_SIZE)
+	create_block_map x0, x1, x2, x3, MMU_FLAGS, x4
+
+	mov	x30, x29
+	ret
+#endif
 
 __create_page_tables:
 	mov	x29, x30						// save return address

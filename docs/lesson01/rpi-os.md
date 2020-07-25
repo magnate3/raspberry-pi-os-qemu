@@ -2,13 +2,17 @@
 
 ## Objectives
 
-A minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
+![](figures/helloworld.png)
+
+We will build: a minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
+
+We will experience: 
 
 1. The C project structure
 
 2. The use of toolchain
 
-3. Read some arm64 assembly 
+3. Some arm64 assembly 
 
 4. Basic knowledge on Rpi3 and its UART hardware
 
@@ -155,12 +159,14 @@ We use the `OBJ_FILES` array to build the `kernel8.elf` file. We use the linker 
 $(ARMGNU)-objcopy kernel8.elf -O binary kernel8.img
 ```
 
-**kernel8.elf vs kernel8.img**
+**kernel8.elf & kernel8.img**
 
 * **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. To execute an ELF program, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our experiment, we do not have such a loader. 
 * **kernel8.img ("kernel image"):** The raw instructions & data as extracted from kernel8.elf. The raw image is to be loaded to memory. Since it's a memory dump (see below), the load is as simple as byte-by-byte copy. 
 
 > "`objcopy` can be used to generate a raw binary file by using an output target of ‘binary’ (e.g., use -O binary). When `objcopy` generates a raw binary file, it will essentially produce a memory dump of the contents of the input object file. All symbols and relocation information will be discarded. The memory dump will start at the load address of the lowest section copied into the output file."
+>
+> Q: can you use `readelf` to examine kernel8.elf, and explain your observation? 
 
 <!----- **Note: the following only applies to Rpi3 hardware. QEMU, which does not implement Rpi3's firmware, does not know config.txt.** You can also boot the CPU in the 64-bit mode by using `arm_control=0x200` flag in the `config.txt` file. The RPi OS previously used this method, and you can still find it in some of the exercise answers. However, `arm_control` flag is undocumented and it is preferable to use `kernel8.img` naming convention instead. --->
 
@@ -191,10 +197,6 @@ The `.text`, `.rodata`, and `.data` sections contain kernel instructions, read-o
 After booting up, our kernel initializes the `.bss` section to 0; that's why we need to record the start and end of the section (hence the `bss_begin` and `bss_end` symbols) and align the section so that it starts at an address that is a multiple of 8. This eases kernel programming because the `str` instruction can be used only with 8-byte-aligned addresses.
 
 ### Kernel startup
-
-#### The kernel binary 
-
-*TBD*
 
 #### Booting the kernel
 
@@ -254,7 +256,7 @@ master:
     bl     memzero
 ```
 
-Here, we clean the `.bss` section by calling `memzero`. We will define this function later. In ARMv8 architecture, by convention, the first seven arguments are passed to the called function via registers x0–x6. The `memzero` function accepts only two arguments: the start address (`bss_begin`) and the size of the section needed to be cleaned (`bss_end - bss_begin`).
+Here, we clean the `.bss` section by calling `memzero`. We will define this function later. In ARMv8 architecture, by convention, the first seven arguments are passed to the called function via registers x0–x6 (cf: our cheat sheet). The `memzero` function accepts only two arguments: the start address (`bss_begin`) and the size of the section needed to be cleaned (`bss_end - bss_begin`).
 
 ```
     mov    sp, #LOW_MEMORY
@@ -278,7 +280,9 @@ For those of you who are not familiar with ARM assembler syntax, let me quickly 
 * [**bl**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289865686.htm) "Branch with a link": perform an unconditional branch and store the return address in x30 (the link register). When the subroutine is finished, use the `ret` instruction to jump back to the return address.
 * [**mov**](http://www.keil.com/support/man/docs/armasm/armasm_dom1361289878994.htm) Move a value between registers or from a constant to a register.
 
-[Here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/index.html) is the ARMv8-A developer's guide. It's a good resource if the ARM ISA is unfamiliar to you. [This page](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/ch09s01s01.html) specifically outlines the register usage convention in the ABI.
+Our [cheat sheet](../../cheatsheet.md) summarizes common ARM64 instructions. 
+
+For official documentation, [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/index.html) is the ARMv8-A developer's guide. It's a good resource if the ARM ISA is unfamiliar to you. [This page](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/ch09s01s01.html) specifically outlines the register usage convention in the ABI.
 
 #### The `kernel_main` function
 
@@ -304,7 +308,7 @@ This function is one of the simplest in the kernel. It works with the `Mini UART
 
 The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 
-> The SoC for Rpi4 seems better for kernel hacking. 
+> Rpi4 seems more friendly to kernel hackers. 
 
 #### Memory-mapped IO
 
@@ -560,7 +564,7 @@ This function just iterates over all characters in a string and sends them one b
 **Low efficiency?** Apparently Tx/Rx with busy wait burn lots of CPU cycles for no good. It's fine for our baremetal program -- simple & less error-prone. Production software often do interrupt-driven Rx/Tx. 
 
 
-### Take it for a spin
+### Take the kernel for a spin
 
 <!-- 1. Execute `./build.sh` or `./build.bat` from [src/lesson01](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01) in order to build the kernel. -->
 
@@ -568,19 +572,19 @@ Run `make` to build the kernel.
 
 #### Rpi3
 
-{xzl: need some clean up...}
-
-**Setup**
-
 The Raspberry Pi startup sequence is the following (simplified):
 
 1. The device is powered on.
 1. The GPU starts up and reads the `config.txt` file from the boot partition. This file contains some configuration parameters that the GPU uses to further adjust the startup sequence.
 1. `kernel8.img` is loaded into memory and executed.
 
+**Setup**
+
 To be able to run our simple OS, the `config.txt` file should be the following:
 
 ```
+enable_uart=1
+arm_64bit=1
 kernel_old=1
 disable_commandline_tags=1
 ```
@@ -590,13 +594,15 @@ disable_commandline_tags=1
 
 **Run**
 
-1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files that be present on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details)
-1. Modify the `config.txt` file as described in the previous section.
+1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details). 
+1. Modify the `config.txt` file as described above.
 1. Connect the USB-to-TTL serial cable as described in the [Prerequisites](../Prerequisites.md).
 1. Power on your Raspberry Pi.
 1. Open your terminal emulator. You should be able to see the `Hello, world!` message there.
 
-Note that the sequence of steps described above asumes that you have Raspbian installed on your SD card. It is also posible to run the RPi OS using an empty SD card.
+**Aside (optional): prepare the SD card from scratch (w/o Raspbian)**
+
+The steps above assume that you have Raspbian installed on your SD card. It is also possible to run the RPi OS using an empty SD card.
 
 1. Prepare your SD card:
     * Use an MBR partition table
@@ -626,15 +632,3 @@ VNC server running on 127.0.0.1:5900
 Hello, world!
 <Ctrl-C>
 ```
-
-
-
-**Previous Page**
-
-[Prerequisites](../../docs/Prerequisites.md)
-
-**Next Page**
-
-1.2 [Kernel Initialization: Linux project structure](../../docs/lesson01/linux/project-structure.md)
-
-`

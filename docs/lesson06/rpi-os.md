@@ -4,21 +4,25 @@
 
 Make our tiny kernel capable of enforcing separate virtual address spaces, and support user demand paging. 
 
+<!--- todo: show a gif screenshot --->
+
 ## Roadmap
 
-* Set up pgtable for kernel. Using linear mapping. 
-* Turn on MMU shortly after kernel boots, which is a common kernel design
+Prior to this experiment, our kernel can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
+
+We will take the following steps. 
+
+* Set up a pgtable for kernel. Using linear mapping. 
+* Turn on MMU shortly after kernel boots. This is a common kernel design. 
 * Set up pgtables for user processes
 * Implement fork() for user processes
 * Implement demand paging 
-
-The RPi OS now can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
 
 ## Background: ARM64 translation process
 
 ### Page table format
 
-This experiment introduces VM to our kernel. With VM, we will formally call tasks "processes". Each task will have its own address space. They issue memory access with virtual addresses. The MMU transparently translates virtual addresses to physical addresses. The MMU uses page table (or pgtable, or "translation table" in ARM's manual). 
+This experiment introduces VM to our kernel. With VM, we can formally call tasks "processes". Each task will have its own address space. They issue memory access with virtual addresses. The MMU transparently translates virtual addresses to physical addresses. The MMU uses page table (or pgtable, or "translation table" in ARM's manual). 
 
 The following diagram summarizes ARM64 address translation with uses 4-level pgtables. 
 
@@ -170,7 +174,7 @@ As you might remember MMU uses only 48 bits out of 64 bits in the virtual addres
 
 The CPU also enforces that software at EL0 can never access virtual addresses started with `0xffff`. Doing so triggers a synchronous exception.  
 
-### **Adjusting kernel symbol addresses** 
+### **Adjusting kernel addresses** 
 
 All absolute kernel addresses must start with `0xffff`. There are 2 places in the RPi OS source code shall be changed. 
 
@@ -184,6 +188,8 @@ All absolute kernel addresses must start with `0xffff`. There are 2 places in th
 
 1. the linker links all kernel symbols at virtual addresses starting from `0xffff000000000000`; 
 2. Before kernel boots and before it turns on MMU, the kernel will operate on physical addresses starting from 0x0 (or 0x80000 for QEMU). 
+
+<!--- show a figure of kernel memory map --->
 
 Keep this key constraint in mind. See below. 
 

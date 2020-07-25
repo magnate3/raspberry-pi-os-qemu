@@ -2,29 +2,28 @@
 
 ## Objectives
 
-A minimum kernel that can schedule multiple cooperative tasks. 
+We will build a minimum kernel that can schedule multiple cooperative tasks. 
+
+## Roadmap
+From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
+
+We will intentionally leave out interrupts, i.e. **timer interrupts are OFF**. Tasks must voluntarily yield to each other. As a result, we focus on scheduling and task switch and defer treatment of interrupt handling to upcoming experiment. . 
+
+We will implement: 
 
 1. The `task_struct` data structure 
 2. Task creation by manipulating `task_struct`, registers, and stack
 3. Minimalist memory allocation
 4. A minimalist task scheduler 
+   <!--- counter. must be maintained in timer_tick() for accounting ... --->
 
-<!-- tbd-->
-<!--- counter. must be maintained in timer_tick() for accounting ... --->
-
-## Roadmap
-
-From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
-
-In this experiment, we will intentionally leave out interrupts, i.e. **timer interrupts are OFF**. Tasks must voluntarily yield to each other. As a result, we focus on scheduling and task switch. 
-
-
+**Processes vs tasks**. As we do not have virtual memory yet, we use the term "tasks" instead of "processes". 
 
 ## Code Walkthrough
 
 ### task_struct
 
-If we want to manage processes, the first thing we should do is to create a struct that describes a process. Linux has such a struct and it is called `task_struct`  (in Linux both thread and processes are just different types of tasks). As we are mostly mimicking Linux implementation, we are going to do the same. RPi OS [task_struct](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L36) looks like the following.
+To manage tasks, the first thing we should do is to create a struct that describes a task. Linux has such a struct and it is called `task_struct`  (in Linux both thread and processes are just different types of tasks; the difference is in how they share address spaces). As we are mostly mimicking Linux implementation, we are going to do the same. Our [task_struct](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L36) looks like the following.
 
 ```
 struct cpu_context {
@@ -54,17 +53,17 @@ struct task_struct {
 
 This struct has the following members:
 
-* `cpu_context` This is an embedded structure that contains values of all registers that might be different between the tasks, that are being switched. A reasonable question to ask is why do we save not all registers, but only registers `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`) The answer is that actual context switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. So, from the point of view of the task that is being switched, it just calls `cpu_switch_to` function and it returns after some (potentially long) time. The task doesn't notice that another task happens to runs during this period.  Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the called function, so the caller must not assume that the values of those registers will survive after a function call. That's why it doesn't make sense to save `x0 - x18` registers.
-* `state` This is the state of the currently running task. For tasks that are just doing some work on the CPU the state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). Actually, this is the only state that the RPi OS is going to support for now. However, later we will have to add a few additional states. For example, a task that is waiting for an interrupt should be moved to a different state, because it doesn't make sense to awake the task while the required interrupt hasn't yet happened.
-* `counter` This field is used to determine how long the current task has been running. `counter` decreases by 1 each timer tick and when it reaches 0 another task is scheduled.
+* `cpu_context` This is an embedded structure that contains values of all registers that might be different between the tasks, that are being switched. A reasonable question to ask is why do we save not all registers, but only registers `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`) The answer is that task switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. So, from the point of view of the task that is being switched, it just calls `cpu_switch_to` function and it returns after some (potentially long) time. The "switched from" task doesn't notice that another task happens to runs during this period.  Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the callee, so the caller must not assume that the values of those registers will survive after a function call. That's why it doesn't make sense to save `x0 - x18` registers.
+* `state` This is the state of the currently running task (note: this is NOT CPU state which is an orthogonal concept). For tasks that are just doing some work on the CPU the state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). Actually, this is the only state that the RPi OS is going to support for now. Later we may add a few additional states. For example, a task that is waiting for an interrupt should be moved to a different state, because it doesn't make sense to awake the task while the required interrupt hasn't yet happened.
+* `counter` This field is used to determine how long the current task has been running. `counter` decreases by 1 each timer tick and when it reaches 0 another task is scheduled. This supports our simple scheduling algorithm.
 * `priority`  When a new task is scheduled its `priority` is copied to `counter`. By setting tasks priority, we can regulate the amount of processor time that the task gets relative to other tasks.
 * `preempt_count` If this field has a non-zero value it is an indicator that right now the current task is executing some critical function that must not be interrupted (for example, it runs the scheduling function.). If timer tick occurs at such time it is ignored and rescheduling is not triggered.
 
 After the kernel startup, there is only one task running: the one that runs [kernel_main](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/kernel.c#L19) function. It is called "init task". Before the scheduler functionality is enabled, we must fill `task_struct` corresponding to the init task. This is done [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L53).
 
-All tasks are stored in [task](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L7) array. This array has only 64 slots - that is the maximum number of simultaneous tasks that we can have in the RPi OS. It is definitely not the best solution for the production-ready OS, but it is ok for our goals.
+All `task_struct`s are stored in [task](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L7) array. This array has only 64 slots - that is the maximum number of simultaneous tasks that we can have in the RPi OS. It is definitely not the best solution for the production-ready OS, but it is ok for our goals.
 
-There is also a very important variable called [current](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L6) that always points to the currently executing task. Both `current` and `task` array are initially set to hold a pointer to the init task. There is also a global variable called [nr_tasks](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L8) - it contains the number of currently running tasks in the system.
+A very important global variable called [current](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L6) that always points to the `task_struct` of currently executing task. Both `current` and `task` array are initially set to hold a pointer to the init task. There is also a global variable called [nr_tasks](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L8) - it contains the number of currently running tasks in the system.
 
 Those are all structures and global variables that we are going to use to implement the scheduler functionality. In the description of the `task_struct` I already briefly mentioned some aspects of how scheduling works, because it is impossible to understand the meaning of a particular `task_struct` field without understanding how this field is used. Now we are going to examine the scheduling algorithm in much more details and we will start with the `kernel_main` function.
 
@@ -99,7 +98,7 @@ void kernel_main(void)
 There are a few important things about this code.
 
 1. New function [copy_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/fork.c#L5) is introduced. `copy_process` takes 2 arguments: a function to execute in a new thread and an argument that need to be passed to this function. `copy_process` allocates a new `task_struct`  and makes it available for the scheduler.
-1. Another new function for us is called [schedule](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L21). This is the core scheduler function: it checks whether there is a new task that needs to preempt the current one. A task can voluntarily call `schedule` if it doesn't have any work to do at the moment. Spoiler: for preemptive multitasking, `schedule` is also called from the timer interrupt handler.
+1. Another new function for us is called [schedule](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L21). This is the core scheduler function: it checks whether there is a new task that needs to preempt the current one. In cooperative scheduling, a task voluntarily calls `schedule` if it doesn't have any work to do at the moment. Spoiler: for preemptive multitasking, `schedule` is also called from the timer interrupt handler.
 
 We are calling `copy_process` 2 times, each time passing a pointer to the [process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/kernel.c#L9) function as the first argument. `process` function is very simple.
 
@@ -118,9 +117,9 @@ void process(char *array)
 
 It just keeps printing on the screen characters from the array, that is passed as an argument The first time it is called with the argument "12345" and second time the argument is "abcde". After printing out a string, a task yields to others by calling `schedule()`. If our scheduler implementation is correct, we should see on the output from both threads.
 
-### Switching tasks (sched.c sched.S])
+### Switching tasks (sched.c & sched.S)
 
-This is where all magic happens. The code looks like this.
+This is where the magic happens. The code looks like this.
 
 ```
 void switch_to(struct task_struct * next)

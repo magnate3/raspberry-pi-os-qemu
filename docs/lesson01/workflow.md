@@ -22,7 +22,7 @@ Safe. If your Rpi3 is powered over the serial cable -- no state to lose. If you 
 
 #### Unplug micro SD from PC without "ejecting/unmounting" from the PC OS?
 
-I advise against it. 
+Safe. See [here](https://docs.microsoft.com/en-us/windows/client-management/change-default-removal-policy-external-storage-media). 
 
 ## The manual workflow
 

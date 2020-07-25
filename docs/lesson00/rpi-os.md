@@ -2,17 +2,13 @@
 
 ## About the docs
 
-Be aware: it contains URLs referring to the upstream git code repo, which may slightly differ from what we use. I will warn you. 
+Be aware: it may contain URLs referring to the upstream git repo, which may slightly differ from what we use. 
 
 ### Terms
 
 baremetal
 
-kernel?
-
-kernel binary 
-
-kernel image
+kernel, kernel binary, kernel image
 
 ## Dev environment
 
@@ -49,8 +45,6 @@ aarch64-linux-gnu-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
 
 * **Required:** A micro SD card. The capacity can be humble (e.g. 4GB). The speed does not matter much. The one I used was $6.  [Rpi's official page about uSD]([https://www.raspberrypi.org/documentation/installation/sd-cards.md))
 
-  <img src="figures/microsd.jpg" alt="usd" style="zoom: 25%;" />
-
 * **Required:** SD card reader. To be plugged in your PC for loading kernel to the micro SD card. A cheap one can be $7 on [Amazon](https://www.amazon.com/IOGEAR-MicroSD-Reader-Writer-GFR204SD/dp/B0046TJG1U)
 
 * **Recommended:** A micro USB cable for powering Rpi3. 
@@ -68,6 +62,8 @@ Load the SD card with Raspbian OS. Follow the official [instructions](https://ww
 
 After you get a serial cable, you need to test your connection. If you never did this before I recommend you to follow [this guide](https://cdn-learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-5-using-a-console-cable.pdf) It describes the process of connecting your Raspberry PI via a serial cable in great details. Basically, you run Raspberry's official OS to ensure the hardware setup is fine. 
 
+![](https://cdn-learn.adafruit.com/assets/assets/000/035/695/small360/learn_raspberry_pi_piconsole_bb.png?1473736644)
+
 #### Powering up RPi3
 
 We recommend you power Rpi3 through its micro USB port. Perhaps use a flip switch on the other side of the USB power for power cycling Rpi3. The guide above also describes how to power your Raspberry Pi using a serial cable. RPi OS works fine with such kind of setup, however, in this case, you need to run your terminal emulator right after you plug in the cable. Check [this](https://github.com/s-matyukevich/raspberry-pi-os/issues/2) issue for details.
@@ -79,6 +75,12 @@ Rpi3 <-- micro USB ---> Wall charger
 
 Power cycling Rpi3, you should see Linux kernel console output on PC terminal. 
 
+#### An example setup
+
+This is my desktop when I hack with the Rpi3 kernel. 
+
+<img src="figures/setup.png" style="zoom:67%;" />
+
 #### Test your dev workflow
 
 ##### Background: what's on SD card?
@@ -88,14 +90,12 @@ On powering up, Rpi3 looks for the following files on `boot` partition of the SD
 * bootcode.bin: the proprietary bootloader for enabling SDRAM. This comes with Raspbian. 
 * start.elf: the proprietary firmware loaded by the bootloader. Using the updated Raspbian OS. This comes with Raspbian. 
 * fixup.dat: needed to use 1GB of memory. This comes with Raspbian. 
-* config.txt: to be parsed by start.elf and decide boot behavior. It offers a great deal of options which is pretty cool. A default one comes with Raspbian. **To be customized by us** 
+* config.txt: to be parsed by start.elf and decide boot behavior. It offers a great deal of options which is pretty cool. A default one comes with Raspbian. **This file is to be customized by us** 
 * kernel8.img: our kernel. 
 
 Summary: we need to change config.txt (once) and kernel8.img (every time we re-compile kernel) on the SD card. 
 
 #### Update config.txt
-
-Ref: the official [doc](https://www.raspberrypi.org/documentation/configuration/config-txt/boot.md) for config.txt. 
 
 Plug the SD card to PC via the card reader. Open config.txt which is on the boot partition. The following two lines are crucial. Add them to config.txt. 
 
@@ -105,6 +105,8 @@ enable_uart=1
 ```
 
 Note: multiple online tutorials advise options like `kernel_old=1` or `arm_control`. You do NOT need those. With our options in config.txt above, Rpi3 will load the kernel named **kernel8.img** to **0x80000**. Check the official doc for config.txt above. Look for `kernel_address`. 
+
+Ref: the official [doc](https://www.raspberrypi.org/documentation/configuration/config-txt/boot.md) for config.txt. 
 
 #### Build & load sample baremetal program
 
@@ -188,13 +190,3 @@ If everything works fine, you should see QMEU print out:
 ```
 My serial number is: 0000000000000000
 ```
-
-
-
-**Previous Page**
-
-[Contribution guide](../docs/Contributions.md)
-
-**Next Page**
-
-1.1 [Kernel Initialization: Introducing RPi OS, or bare metal "Hello, world!"](../docs/lesson01/rpi-os.md)

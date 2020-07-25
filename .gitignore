@@ -10,6 +10,7 @@ src/*/build
 
 .project
 .cproject
+.orig
 
 # gnu global files
 GPATH

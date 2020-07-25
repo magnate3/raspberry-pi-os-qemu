@@ -15,15 +15,19 @@ Students will:
 
 ARMv8 defines 4 exception levels. You can think about an exception level as a processor execution mode in which only a subset of all operations and registers is available. The least privileged exception level, i.e. lowest level, is level 0. When processor operates at this level, it mostly uses only general purpose registers (X0 - X30) and stack pointer register (SP). EL0 also allows using `STR` and `LDR` commands to load and store data to and from memory and a few other instructions commonly used by a user program.
 
-An OS kernel deals with exception levels because it needs to implement process isolation. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
+<img src="figures\els.png" alt="image-20200724105904952" style="zoom: 67%;" />
+
+An OS kernel deals with exception levels because it needs to implement *isolation*. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
 
 The kernel itself usually works at EL1. While running at this exception level CPU gets access to the registers that allows configuring MMU as well as some system registers. 
 
-We are NOT going to use exceptions levels 2 and 3 a lot, but I just want to briefly describe them so you can get an idea why they are needed. 
+**Aside**: this lab is NOT going to use EL 2 or EL 3, but I just want to briefly describe them so you can get an idea why they are needed. 
 
 EL2 is used in a scenario when we are using a hypervisor. In this case hypervisor runs at EL2 and guest OSes run at EL1. This allows the hypervisor to isolate guest OSes in a similar way how OS isolates user processes.
 
 EL3 pertains to Arm TrustZone. It is used for transitions from ARM "Secure World" to "Insecure world". This abstraction exist to provide full hardware isolation between the software running in two different "worlds". Application from an "Insecure world" can in no way access or modify information (both instruction and data) that belongs to "secure world", and this restriction is enforced at the hardware level. 
+
+We will do TrustZone experiments soon!
 
 ### Switching ELs
 
@@ -49,7 +53,7 @@ There are more details, e.g. the exception handler software also needs to store 
 
 An important thing to know is that exception handler is not obliged to return to the same instruction where the exception originates. Both `ELR_ELm` and `SPSR_ELn` are writable and the exception handler can modify them in order to specify the instructions to execute right after the EL switch. We are going to use this technique to our advantage when we try to switch from EL3 to EL1 in our code.
 
-## Enhanced our debugging
+## Enhanced debugging
 
 ### Bring up printf()
 
@@ -57,13 +61,15 @@ Right now, the kernel can only print some constant string on a screen, but what 
 
 Let's not reinvent the wheel and use one of  [existing printf implementations](http://www.sparetimelabs.com/tinyprintf/tinyprintf.php) This function consists mostly from string manipulations and is not very interesting from a kernel developer point of view. The implementation that I used is very small and don't have external dependencies, that allows it to be easily integrated into the kernel. The only thing that I have to do is to define `putc`  function that can send a single character to the screen. This function is defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/mini_uart.c#L59) and it just uses already existing `uart_send` function. Also, we need to initialize the `printf` library and specify the location of the `putc` function. This is done in a single [line of code](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/kernel.c#L8).
 
-### QEMU debugging
+### QEMU + GDB debugging
 
 <!--- Todo: add GDB debugging ---> 
 
+GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online, e.g. [this one](GDB debug instructions). 
+
 ## Code Walkthrough
 
-### Finding current EL
+### Finding out the current EL
 
 As we are equipped with the `printf` function, we can proceed to figure out at which exception level the kernel is booted. A small function that can answer this question is defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/utils.S#L1) and looks like this.
 
@@ -113,7 +119,6 @@ master:
 The code configures a few system registers. Now we are going to examine those registers one by one. The register details are documented in [the Armv8 architecture manual](https://developer.arm.com/docs/ddi0487/ca/arm-architecture-reference-manual-armv8-for-armv8-a-architecture-profile) which we will refer to as needed. 
 
 #### SCTLR_EL1, System Control Register (EL1) 
-[Reference](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/sctlr_el1)
 <!----Page 2654 of AArch64-Reference-Manual--->
 ```
     ldr    x0, =SCTLR_VALUE_MMU_DISABLED
@@ -131,8 +136,9 @@ Here we set the value of the `sctlr_el1` system register. `sctlr_el1` is respons
 * `#define SCTLR_D_CACHE_DISABLED          (0 << 2)` Disable data cache.
 * `#define SCTLR_MMU_DISABLED              (0 << 0)` Disable MMU. MMU must be disabled until the lesson 6, where we are going to prepare page tables and start working with virtual memory.
 
+FYI - [official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/sctlr_el1)
+
 #### HCR_EL2, Hypervisor Configuration (EL2) 
-[Reference](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/hcr_el2)
 <!--- Page 2487 of AArch64-Reference-Manual.  -->
 
 ```
@@ -140,10 +146,11 @@ Here we set the value of the `sctlr_el1` system register. `sctlr_el1` is respons
     msr    hcr_el2, x0
 ```
 
-We are NOT going to implement our own [hypervisor](https://en.wikipedia.org/wiki/Hypervisor). Still we need to use this register. Among other settings, it controls the execution state at EL1. Execution state must be `AArch64` and not `AArch32`. This is configured [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L22).
+We are NOT going to implement our own [hypervisor](https://en.wikipedia.org/wiki/Hypervisor). Still we need to use this register. Among other settings, bit 31 (RW) controls the execution state at EL1, being AArch64 (1) or AArch32 (0). In `sysregs.h` we set HCR_VALUE to be (1<<31). 
+
+[Official doc](https://developer.arm.com/documentation/100403/0200/register-descriptions/aarch64-system-registers/hcr-el2--hypervisor-configuration-register--el2)
 
 #### SCR_EL3, Secure Configuration (EL3) 
-[Reference](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/scr_el3)
 <!----Page 2648 of AArch64-Reference-Manual --->
 
 ```
@@ -151,11 +158,13 @@ We are NOT going to implement our own [hypervisor](https://en.wikipedia.org/wiki
     msr    scr_el3, x0
 ```
 
-This register is responsible for configuring security settings. For example, it controls whether all lower levels are executed in "secure" or "nonsecure" state. It also controls execution state at EL2. [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L26) we set that EL2  will execute at `AArch64` state, and all lower exception levels will be "non secure". 
+This register is responsible for configuring security settings. For example, it controls whether all lower levels are executed in "secure" or "nonsecure" world. It also controls execution state at EL2. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/include/arm/sysregs.h#L26) we set that EL2 will execute at `AArch64` state, and all lower exception levels will be "non secure". 
+
+This register has no counterpart at EL2. Therefore, we don't have to set it on qemu emulation. 
+
+[Official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/scr_el3)
 
 #### SPSR_EL3, Saved Program Status (EL3) 
-[Reference](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/spsr_el3)
-
 <!-----------Page 389 of AArch64-Reference-Manual --------->
 
 ```
@@ -179,18 +188,20 @@ Usually `spsr_el3` is saved automatically by CPU hardware, when an exception is 
 * `#define SPSR_MASK_ALL        (7 << 6)` After we change EL to EL1 all types of interrupts will be masked (or disabled, which is the same).
 * `#define SPSR_EL1h        (5 << 0)` This indicates to which EL the `eret` instruction will take the CPU to. It's EL1. About EL1h: At EL1 we can either use our own dedicated stack pointer or use EL0 stack pointer. `EL1h` mode means that we are using EL1 dedicated stack pointer. 
 
+[Official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/spsr_el3)
+
 #### ELR_EL3, Exception Link (EL3) 
-[Reference](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/elr_el3)
 <!----- Page 351 of AArch64-Reference-Manual.---->
 
 ```
     adr    x0, el1_entry        
     msr    elr_el3, x0
-
     eret                
 ```
 
 `elr_el3` holds the address, to which we are going to return after `eret` instruction will be executed. Here we set this address to the location of `el1_entry` label.
+
+[Official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/elr_el3)
 
 ## Conclusion
 

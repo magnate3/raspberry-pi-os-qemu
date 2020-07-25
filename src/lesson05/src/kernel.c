@@ -7,6 +7,13 @@
 #include "mini_uart.h"
 #include "sys.h"
 
+/* reasonable rate of printing characters...*/
+#ifdef USE_QEMU
+#define DELAYS 5000000
+#else
+#define DELAYS 500000
+#endif
+
 void user_process1(char *array)
 {
 	char buf[2] = {0};
@@ -14,7 +21,7 @@ void user_process1(char *array)
 		for (int i = 0; i < 5; i++){
 			buf[0] = array[i];
 			call_sys_write(buf);
-			delay(100000);
+			delay(DELAYS);
 		}
 	}
 }
@@ -59,8 +66,11 @@ void kernel_main(void)
 {
 	uart_init();
 	init_printf(0, putc);
+
+	printf("kernel boots...\n\r");
+
 	irq_vector_init();
-	timer_init();
+	generic_timer_init();
 	enable_interrupt_controller();
 	enable_irq();
 

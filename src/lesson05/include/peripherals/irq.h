@@ -6,7 +6,7 @@
 #define IRQ_BASIC_PENDING	(PBASE+0x0000B200)
 #define IRQ_PENDING_1		(PBASE+0x0000B204)
 #define IRQ_PENDING_2		(PBASE+0x0000B208)
-#define FIQ_CONTROL		(PBASE+0x0000B20C)
+#define FIQ_CONTROL		    (PBASE+0x0000B20C)
 #define ENABLE_IRQS_1		(PBASE+0x0000B210)
 #define ENABLE_IRQS_2		(PBASE+0x0000B214)
 #define ENABLE_BASIC_IRQS	(PBASE+0x0000B218)
@@ -18,5 +18,14 @@
 #define SYSTEM_TIMER_IRQ_1	(1 << 1)
 #define SYSTEM_TIMER_IRQ_2	(1 << 2)
 #define SYSTEM_TIMER_IRQ_3	(1 << 3)
+
+// See BCM2836 ARM-local peripherals at
+// https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf
+
+#define TIMER_INT_CTRL_0    (0x40000040)
+#define INT_SOURCE_0        (LPBASE+0x60)
+
+#define TIMER_INT_CTRL_0_VALUE  (1 << 1)
+#define GENERIC_TIMER_INTERRUPT (1 << 1)
 
 #endif  /*_P_IRQ_H */
