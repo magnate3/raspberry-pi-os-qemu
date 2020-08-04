@@ -37,7 +37,7 @@ aarch64-linux-gnu-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
 
 * **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/)
 
-<img src="https://www.raspberrypi.org/homepage-9df4b/static/be658fef8c4d492bb6d85187f678cf89/a0db7/42a30d80d90dcfbde51468383beaa4c5cbefc962_raspberry-pi-3-hero-1-1571x1080.jpg" alt="rpi3" style="zoom:50%;" />
+<img src="figures\rpi3.jpg" alt="img" style="zoom: 50%;" />
 
 * **Required:** A USB to TTL serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable)
 
