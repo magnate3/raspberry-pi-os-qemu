@@ -46,7 +46,7 @@ Each exception level (EL) has its own vector table. Here we focus on EL1 where t
 
 > "The t and h suffixes are based on the terminology of *thread* and *handler*, introduced in ARMv7-M." -- ARM
 
-In total, for EL1 the kernel needs to define 16 exception handlers (4 types X 4 execution states) 
+In total, for EL1 the kernel needs to **define 16 exception handlers** (4 types X 4 execution states) 
 
 ### ARM64 vector table
 

@@ -42,7 +42,7 @@ Repeat:
 
 Depending on your PC OS: 
 
-Linux: there's a Python script you can adapt. 
+Linux: there's a Python script which you can adapt. 
 
 Windows (WSL):
 

@@ -1,4 +1,4 @@
-# 1.1: Baremetal HelloWorld
+# Baremetal HelloWorld
 
 ## Objectives
 
@@ -10,25 +10,25 @@ We will experience:
 
 1. The C project structure
 
-2. The use of toolchain
+2. The use of cross-compilation toolchain
 
-3. Some arm64 assembly 
+3. arm64 assembly (lightly)
 
 4. Basic knowledge on Rpi3 and its UART hardware
 
 ## Roadmap
 
-Create a Makefile project. Add bare minimum boot code. Initialize the UART hardware. Send characters to the UART registers. 
+Create a Makefile project. Add bare minimum code for boot. Initialize the UART hardware. Send characters to the UART registers. 
 
 ## **Terms** 
 
 1. Strictly speaking, this baremetal program is not a "kernel". We nevertheless call it so for ease of explanation. 
 
-2. "Raspberry Pi" means the actual Rpi3 hardware. "QEMU" means the Rpi3 platform as emulated by QEMU. In case the hardware behaves differently from QEMU, we will explain. 
+2. "Raspberry Pi" means the actual Rpi3 hardware. "QEMU" means the Rpi3 platform as emulated by QEMU. We will explain details where the real hardware behaves differently from QEMU. 
 
 ## Project structure
 
-The source code of each experiment has the same structure. 
+Of all the subsequent experiments, the kernel source code has the same structure. 
 1. **Makefile** We will use the [make](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) utility to build the kernel. `make`'s behavior is configured by a Makefile, which contains instructions on how to compile and link the source code. 
 1. **src** This folder contains all of the source code.
 1. **include** All of the header files are placed here. 
@@ -161,9 +161,11 @@ $(ARMGNU)-objcopy kernel8.elf -O binary kernel8.img
 
 **kernel8.elf & kernel8.img**
 
-* **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. To execute an ELF program, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our experiment, we do not have such a loader. 
+* **build/kernel8.elf ("kernel binary"):** Our build outcome as an ELF file. It contains all code, data, and debugging info. Often, to execute an ELF program in user space, there should be a loader to parse ELF, load code & data to designated memory locations, etc. For our kernel experiment, we do NOT have such a loader for the kernel itself. 
 * **kernel8.img ("kernel image"):** The raw instructions & data as extracted from kernel8.elf. The raw image is to be loaded to memory. Since it's a memory dump (see below), the load is as simple as byte-by-byte copy. 
 
+> The kernel image is produced by `objcopy`. Its manual says: 
+>
 > "`objcopy` can be used to generate a raw binary file by using an output target of ‘binary’ (e.g., use -O binary). When `objcopy` generates a raw binary file, it will essentially produce a memory dump of the contents of the input object file. All symbols and relocation information will be discarded. The memory dump will start at the load address of the lowest section copied into the output file."
 >
 > Q: can you use `readelf` to examine kernel8.elf, and explain your observation? 
@@ -172,7 +174,7 @@ $(ARMGNU)-objcopy kernel8.elf -O binary kernel8.img
 
 ### The linker script
 
-A linker script describes how the sections in the input object files (`_c.o` and `_s.o`) should be mapped into the output file (`.elf`); it also controls the addresses of all program symbols (e.g. functions and variables). More information can be found [here](https://sourceware.org/binutils/docs/ld/Scripts.html#Scripts). Now let's take a look at the RPi OS linker script:
+A linker script describes how the sections in the input object files (`_c.o` and `_s.o`) should be mapped into the output file (`.elf`); it also controls the addresses of all program symbols (e.g. functions and variables). More information can be found [here](https://sourceware.org/binutils/docs/ld/Scripts.html#Scripts). Now let's take a look at the linker script:
 
 ```
 SECTIONS
@@ -188,7 +190,7 @@ SECTIONS
 }
 ```
 
-After startup, the Rpi3 firmware loads `kernel8.img` into memory 0x0 and starts execution from the beginning of the file. That's why the `.text.boot` section must be first; we are going to put the OS startup code inside this section. QEMU behaves differently: it loads the kernel image at 0x80000. 
+After startup, the Rpi3 GPU loads `kernel8.img` into memory 0x0 and starts execution from the beginning of the file. That's why the `.text.boot` section must come first; we are going to put the kernel startup code inside this section. QEMU behaves differently: it loads the kernel image at 0x80000. 
 
 >  Q: How to tweak the linker script to update the start address?
 
@@ -246,7 +248,7 @@ Rpi3 has 4 cores, and after the device is powered on, each core begins to execut
 
 #### Kernel memory layout
 
-If the current processor ID is 0, then execution is transferred to the `master` function:
+If the current processor ID is 0, then execution branches to the `master` function:
 
 ```
 master:
@@ -265,7 +267,7 @@ Here, we clean the `.bss` section by calling `memzero`. We will define this func
 
 <img src="figures/mem-0.png" alt="fig-mem" style="zoom:20%;" />
 
-After cleaning the `.bss` section, the kernel initializes the stack pointer and pass execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. Our kernel's stack won't grow very large and the image itself is tiny, so `4MB` is more than enough for us. 
+After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As, our kernel's stack won't grow very large and the image itself is tiny, so `4MB` is more than enough for us. 
 
 **Aside: Some ARM64 instructions used** 
 
@@ -304,7 +306,7 @@ void kernel_main(void)
 
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
-### A bit about Rpi3 hardware
+### A bit about the Rpi3 hardware
 
 The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 

@@ -21,7 +21,7 @@ An OS kernel deals with exception levels because it needs to implement *isolatio
 
 The kernel itself usually works at EL1. While running at this exception level CPU gets access to the registers that allows configuring MMU as well as some system registers. 
 
-**Aside**: this lab is NOT going to use EL 2 or EL 3, but I just want to briefly describe them so you can get an idea why they are needed. 
+**About EL2/3**: this lab is NOT going to use EL 2 or EL 3, but I just want to briefly describe them so you can get an idea why they are needed. 
 
 EL2 is used in a scenario when we are using a hypervisor. In this case hypervisor runs at EL2 and guest OSes run at EL1. This allows the hypervisor to isolate guest OSes in a similar way how OS isolates user processes.
 
@@ -146,7 +146,9 @@ FYI - [official doc](https://developer.arm.com/docs/ddi0595/b/aarch64-system-reg
     msr    hcr_el2, x0
 ```
 
-We are NOT going to implement our own [hypervisor](https://en.wikipedia.org/wiki/Hypervisor). Still we need to use this register. Among other settings, bit 31 (RW) controls the execution state at EL1, being AArch64 (1) or AArch32 (0). In `sysregs.h` we set HCR_VALUE to be (1<<31). 
+We are NOT going to implement our own [hypervisor](https://en.wikipedia.org/wiki/Hypervisor). Still we need to use this register. Among other settings, bit 31 (RW) controls the execution state at EL1, being AArch64 (1) or AArch32 (0). This register also controls at which EL we will handle IRQ. 
+
+In `sysregs.h` we set HCR_VALUE to be (1<<31). 
 
 [Official doc](https://developer.arm.com/documentation/100403/0200/register-descriptions/aarch64-system-registers/hcr-el2--hypervisor-configuration-register--el2)
 
