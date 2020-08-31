@@ -267,7 +267,7 @@ Here, we clean the `.bss` section by calling `memzero`. We will define this func
 
 <img src="figures/mem-0.png" alt="fig-mem" style="zoom:20%;" />
 
-After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As, our kernel's stack won't grow very large and the image itself is tiny, so `4MB` is more than enough for us. 
+After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As our kernel's stack won't grow very large and the image itself is tiny, 4MB is more than enough for us. 
 
 **Aside: Some ARM64 instructions used** 
 
@@ -598,7 +598,7 @@ disable_commandline_tags=1
 
 1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details). 
 1. Modify the `config.txt` file as described above.
-1. Connect the USB-to-TTL serial cable as described in the [Prerequisites](../Prerequisites.md).
+1. Connect the USB-to-TTL serial cable as described in the [Prerequisites](../lesson00/rpi-os.md).
 1. Power on your Raspberry Pi.
 1. Open your terminal emulator. You should be able to see the `Hello, world!` message there.
 
@@ -624,7 +624,7 @@ Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocument
 
 **Setup**
 
-Follow the instructions in [Prerequisites](../Prerequisites.md).
+Follow the instructions in [Prerequisites](../lesson00/rpi-os.md).
 
 **Run**
 
