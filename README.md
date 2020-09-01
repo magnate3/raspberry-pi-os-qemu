@@ -47,14 +47,6 @@ Experimenting with these features is difficult with commodity kernels due to the
 
 Derived from the RPi OS project and its tutorials, which is modeled after the [Linux kernel](https://github.com/torvalds/linux). 
 
-## Key docs
-
-Board manual: Rpi3 board pinout
-
-SoC manual: Bcm
-
-ARM64: 
-
 <!---- to complete --->
 
 ## Table of Contents
@@ -81,4 +73,8 @@ ARM64:
 1. **Into virtual **
       * [Virtual memory management](docs/lesson06/rpi-os.md) 
       * [Exercises](docs/lesson06/exercises.md)
+
+## Grading
+
+[Weights distribution among experiments](./docs/Grading.md)
 
