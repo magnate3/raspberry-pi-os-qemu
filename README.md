@@ -60,25 +60,25 @@ ARM64:
 ## Experiments
 
 
-0. **[Sharpen your tools!](docs/lesson00/rpi-os.md)**
-1. **Helloworld from baremetal** 
+Exp 0. **[Sharpen your tools!](docs/lesson00/rpi-os.md)**
+Exp 1. **Helloworld from baremetal** 
       * [Power on + UART bring up](docs/lesson01/rpi-os.md)
       * [Simplifying dev workflow](docs/lesson01/workflow.md)
       <!---- * [Exp](docs/lesson01/exercises.md) ----->
-1. **Exception elevated**
+Exp 2. **Exception elevated**
       * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
       <!---- * [Exp](docs/lesson02/exercises.md) ----->
-1. **Heartbeats on**
+Exp 3. **Heartbeats on**
       * [Interrupt handling](docs/lesson03/rpi-os.md)
       <!----* [Exp](docs/lesson03/exercises.md) ----->
-1. **Process scheduler**
+Exp 4.**Process scheduler**
       * [A. Cooperative](docs/lesson04a/rpi-os.md) 
       * [B. Preemptive](docs/lesson04b/rpi-os.md) 
       <!---- * [Exercises](docs/lesson04a/exercises.md) ----->
-1. **A world of two lands** 
+Exp 5.**A world of two lands** 
       * [User processes and system calls](docs/lesson05/rpi-os.md) 
       <!---- * [Exercises](docs/lesson05/exercises.md) ----->
-1. **Into virtual**
+Exp 6.**Into virtual**
       * [Virtual memory management](docs/lesson06/rpi-os.md) 
       <!---- * [Exercises](docs/lesson06/exercises.md) ----->
 
