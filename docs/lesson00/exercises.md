@@ -1,8 +1,10 @@
 ## Exercise
 
-Follow the given instruction and bring up everything. Turn in a one-page report (in PDF):
+Follow the given instructions and bring up everything. Stating your setup: 
 
-* stating your setup
-  * if you use QEMU: show a screenshot of the baremetal program running
-  * if you use Rpi3: show a picture (e.g. taken by your phone) of the baremetal program running
+* if you use QEMU: attach a screenshot of the baremetal program running
+* if you use Rpi3: show a picture (e.g. taken by your phone) of the baremetal program running
 
+### Deliverable
+
+A docx or PDF file answering the question above.

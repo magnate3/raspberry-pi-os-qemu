@@ -23,7 +23,7 @@ kernel, kernel binary, kernel image
 Use the one provided by Ubuntu. Save the hassle from compiling from source, etc.
 
 ```
-$ sudo apt get install gcc-aarch64-linux-gnu 
+$ sudo apt install gcc-aarch64-linux-gnu 
 
 $ aarch64-linux-gnu-gcc --version
 aarch64-linux-gnu-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
@@ -85,7 +85,7 @@ This is my desktop when I hack with the Rpi3 kernel.
 
 ##### Background: what's on SD card?
 
-On powering up, Rpi3 looks for the following files on `boot` partition of the SD card. The  
+On powering up, Rpi3 looks for the following files on `boot` partition of the SD card. 
 
 * bootcode.bin: the proprietary bootloader for enabling SDRAM. This comes with Raspbian. 
 * start.elf: the proprietary firmware loaded by the bootloader. Using the updated Raspbian OS. This comes with Raspbian. 
@@ -148,7 +148,8 @@ Build QEMU from source.
 
 ```
 sudo apt remove qemu-system-arm
-sudo apt install gdb-multiarch build-essential
+sudo apt install gdb-multiarch build-essential pkg-config
+sudo apt install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
 ```
 
 Grab source.  We use v4.2. 
@@ -177,7 +178,7 @@ raspi3               Raspberry Pi 3
 Test QEMU with Rpi3 baremetal code
 
 ```
-git clone git@github.com:fxlin/raspi3-tutorial.git
+git clone https://github.com/fxlin/raspi3-tutorial.git
 cd raspi3-tutorial
 git checkout b026449
 cd 05_uart0
