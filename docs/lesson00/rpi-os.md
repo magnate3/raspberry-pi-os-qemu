@@ -179,7 +179,7 @@ raspi3               Raspberry Pi 3
 Test QEMU with Rpi3 baremetal code
 
 ```
-git clone git@github.com:fxlin/raspi3-tutorial.git
+git clone https://github.com/fxlin/raspi3-tutorial.git
 cd raspi3-tutorial
 git checkout b026449
 cd 05_uart0
