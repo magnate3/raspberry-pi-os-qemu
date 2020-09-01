@@ -49,30 +49,30 @@ Derived from the RPi OS project and its tutorials, which is modeled after the [L
 
 <!---- to complete --->
 
-## Table of Contents
+## Experiments
 
 
-0. **[Sharpen your tools!](docs/lesson00/rpi-os.md)**
-1. **Helloworld from baremetal** 
+0. **[Sharpen your tools!](docs/lesson00/rpi-os.md)** (p1 exp0) 
+1. **Helloworld from baremetal** (p1 exp1) 
       * [Power on + UART bring up](docs/lesson01/rpi-os.md)
-      * [Simplifying dev workflow](docs/lesson01/workflow)
-      * [Exercises](docs/lesson01/exercises.md)
-1. **Exception elevated**
+      * [Simplifying dev workflow](docs/lesson01/workflow.md)
+      <!---- * [Exp](docs/lesson01/exercises.md) ----->
+1. **Exception elevated** (p1 exp2) 
       * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
-      * [Exercises](docs/lesson02/exercises.md)
-1. **Heartbeats on**
+      <!---- * [Exp](docs/lesson02/exercises.md) ----->
+1. **Heartbeats on** (p1 exp3) 
       * [Interrupt handling](docs/lesson03/rpi-os.md)
-      * [Exercises](docs/lesson03/exercises.md)
-1. **Process scheduler**
+      <!----* [Exp](docs/lesson03/exercises.md) ----->
+1. **Process scheduler** (p1 exp4) 
       * [A. Cooperative](docs/lesson04a/rpi-os.md) 
       * [B. Preemptive](docs/lesson04b/rpi-os.md) 
-      * [Exercises](docs/lesson04a/exercises.md)
-1. **A world of two lands** 
+      <!---- * [Exercises](docs/lesson04a/exercises.md) ----->
+1. **A world of two lands** (p1 exp5) 
       * [User processes and system calls](docs/lesson05/rpi-os.md) 
-      * [Exercises](docs/lesson05/exercises.md)
-1. **Into virtual **
+      <!---- * [Exercises](docs/lesson05/exercises.md) ----->
+1. **Into virtual** (p1 exp6) 
       * [Virtual memory management](docs/lesson06/rpi-os.md) 
-      * [Exercises](docs/lesson06/exercises.md)
+      <!---- * [Exercises](docs/lesson06/exercises.md) ----->
 
 ## Grading
 

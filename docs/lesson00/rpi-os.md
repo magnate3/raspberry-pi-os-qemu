@@ -121,6 +121,8 @@ make
 qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio
 ```
 
+**Note**: the repo above (raspi3-tutorial.git) is NOT our project repo. It's someone's code for testing rpi3 hardware. We are just using for testing ONLY. 
+
 Copy kernel8.img to the SD card. Eject the SD card from PC. Plug the SD to Rpi3. Make sure the serial connection is good and terminal emulator on your PC is ready. Power cycle Rpi3. You should see something like: 
 
 ![serial](figures/serial.png)
