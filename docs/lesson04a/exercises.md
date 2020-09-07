@@ -6,3 +6,11 @@
 1. (optional) Modify the kernel: allow it to have an unlimited number of tasks (right now the limit is 64). 
 
 
+
+### Deliverable
+
+A code tarball implementing (1) above. 
+
+A code tarball implementing (2) above. 
+
+A code tarball implementing (3) above. 

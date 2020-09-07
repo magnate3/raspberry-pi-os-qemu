@@ -7,3 +7,11 @@
 3. Implement a sleep() syscall. See its interface [here](https://man7.org/linux/man-pages/man3/sleep.3.html). You do not have to implement the signal part. 
 
 <!--- Add tracing to kernel. Output in ftrace format which can be plotted using various tools. --->
+
+### Deliverable
+
+A code tarball implementing (1) above. 
+
+A code tarball implementing (2) above. 
+
+A code tarball implementing (3) above. 

@@ -343,7 +343,7 @@ The above information is enough. More about Raspberry Pi UARTs: see the [officia
 
 #### GPIO
 
-Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIO provides a bunch of registers. Each bit in such a register corresponds to a pin on the Rpi3 board. By writing 1 or 0 to register bits, software can control the output voltage on the pins, e.g. for turning on/off LEDs connected to such pins. Reading is done in a similar fashion. The picture below shows GPIO pin headers populated on Rpi3. 
+Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIO provides a bunch of registers. Each bit in such a register corresponds to a pin on the Rpi3 board. By writing 1 or 0 to register bits, software can control the output voltage on the pins, e.g. for turning on/off LEDs connected to such pins. Reading is done in a similar fashion. The picture below shows GPIO pin headers populated on Rpi3. (Note: the picture shows Rpi2, which has the same pinout as Rpi3)
 
 <img src="../../images/gpio-pins.jpg" alt="Raspberry Pi GPIO pins" style="zoom: 33%;" />
 

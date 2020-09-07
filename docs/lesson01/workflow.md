@@ -10,19 +10,19 @@ You should proceed only after having verified your hardware setup is correct.
 
 #### Unplug the micro SD card (uSD) when Rpi3 is powered on?
 
-Safe. Doing so when Rpi3 runs a full-fledged OS, e.g. Raspbian OS, may corrupt data because the OS caches data in memory. Our tiny kernel does not attempt to write any data to the micro SD. 
+**Safe**. Doing so when Rpi3 runs a full-fledged OS, e.g. Raspbian OS, may corrupt data because the OS caches data in memory. Our tiny kernel does not attempt to write any data to the micro SD. 
 
 #### Plug in a micro SD card when Rpi3 is powered on?
 
-Safe. Then you can power-cycle the Rpi3 so 
+**Safe**. Then you can power-cycle the Rpi3 so 
 
 #### Disconnect the serial cable when Rpi3 is on?
 
-Safe. If your Rpi3 is powered over the serial cable -- no state to lose. If you Rpi3 is powered over micro USB: why disconnect the serial cable frequently? 
+**Safe**. If your Rpi3 is powered over the serial cable -- no state to lose. If you Rpi3 is powered over micro USB: why disconnect the serial cable frequently? 
 
 #### Unplug micro SD from PC without "ejecting/unmounting" from the PC OS?
 
-Safe. See [here](https://docs.microsoft.com/en-us/windows/client-management/change-default-removal-policy-external-storage-media). 
+**Safe**. See [here](https://docs.microsoft.com/en-us/windows/client-management/change-default-removal-policy-external-storage-media). 
 
 ## The manual workflow
 
@@ -44,9 +44,9 @@ Depending on your PC OS:
 
 Linux: there's a Python script which you can adapt. 
 
-Windows (WSL):
+Windows (WSL): (contribute your experience)
 
-OSX: 
+OSX: (contribute your experience)
 
 
 

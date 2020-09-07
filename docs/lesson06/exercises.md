@@ -40,6 +40,8 @@ Check out the table "Other timers on Rpi3" in experiment 3: the registers for th
 
 Now you will have to figure out how to allocate and populate the needed additional pgtable and eventually get everything work. 
 
+### Deliverable
 
+A code tarball implementing the task above. 
 
 <!---- Swapping (to ram disk) ---> 
