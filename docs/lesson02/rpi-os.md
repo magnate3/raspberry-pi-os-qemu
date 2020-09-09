@@ -65,7 +65,10 @@ Let's not reinvent the wheel and use one of  [existing printf implementations](h
 
 <!--- Todo: add GDB debugging ---> 
 
-GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online, e.g. [this one](GDB debug instructions). 
+GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. Here are my quick notes: 
+https://myuva.sharepoint.com/sites/cs6456-f20/_layouts/OneNote.aspx?id=%2Fsites%2Fcs6456-f20%2FSiteAssets%2Fcs6456-f20%20Notebook&wd=target%28_Collaboration%20Space%2Fproj1-kernel%20Notes.one%7CB7C215E6-4124-4257-AAC4-2C0A83DAEB0B%2FOn%20using%20GDB%7C39046454-8889-4976-83AF-BCD7438B1257%2F%29
+onenote:https://myuva.sharepoint.com/sites/cs6456-f20/SiteAssets/cs6456-f20%20Notebook/_Collaboration%20Space/proj1-kernel%20Notes.one#On%20using%20GDB&section-id={B7C215E6-4124-4257-AAC4-2C0A83DAEB0B}&page-id={39046454-8889-4976-83AF-BCD7438B1257}&end
+
 
 ## Code Walkthrough
 
