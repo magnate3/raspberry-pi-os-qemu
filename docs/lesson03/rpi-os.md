@@ -331,15 +331,6 @@ gen_timer_reset:
 
 There are other timers on Rpi3 which you may see from various online blogs/tutorials/forums. The information can be very confusing. The naming of timers does NOT help. I list them below together with Arm generic timers described above. I suggest you stay away from other timers because the experience will not be as useful. 
 
-| Name              | Implemented by | IRQ                                                    | QEMU support? (v5.0 )                                        | Phys Addr | Document                           |
-| ----------------- | -------------- | ------------------------------------------------------ | ------------------------------------------------------------ | --------- | ------------------------------------ |
-| System Timer      | Broadcom?      | Global. In GPU irq space.                              | Implemented as bcm2835_systmr. However free running and [cannot generate irq](https://lists.sr.ht/~philmd/qemu/patches/8811). | 3f003000  | BCM2837                              |
-| ARM timer         | Arm ip (sp804) | Global. In Arm core's private irq space ("Basic irqs") | Unimplemented. See QEMU code bcm2835_peripherals.c           | 3f00b400  | BCM2836                              |
-| Local timer       | Broadcom?      | Per core.                                              | [Partially implemented](https://forum.osdev.org/viewtopic.php?f=2&t=33537). Can generate trigger irq but readback seems unsupported. | 40000034  | BCM2836                              |
-| Arm generic timer | Part of armv8  | Per core.                                              | Implemented                                                  | 40000040  | Armv8 doc +  BCM2836 for IRQ routing |
-
-
-
 
 | Name              | Implemented by        | IRQ                                                    | QEMU support? (v5.0 )                                        | Phys Addr | Document                             |
 | ----------------- | --------------------- | ------------------------------------------------------ | ------------------------------------------------------------ | --------- | ------------------------------------ |
@@ -348,9 +339,7 @@ There are other timers on Rpi3 which you may see from various online blogs/tutor
 | Local timer       | Broadcom (?)          | Per core                                               | [Partially implemented](https://forum.osdev.org/viewtopic.php?f=2&t=33537). Can generate trigger irq but readback seems unsupported. | 40000034  | BCM2836                              |
 | Arm generic timer | Arm, as part of armv8 | Per core                                               | Implemented                                                  | 40000040  | Armv8 doc +  BCM2836 for IRQ routing |
 
-
-
-#### FYI: Programming the Rpi3's system timer
+#### FYI: Programming the Rpi3's system timer (not used in this experiment)
 
 Raspberry Pi system timer is a very simple device. It has a counter that increases its value by 1 after each clock tick. It also has 4 interrupt lines that connect to the interrupt controller (so it can generate 4 different interrupts)  and 4 corresponding compare registers. When the value of the counter becomes equal to the value stored in one of the compare registers the corresponding interrupt is fired. That's why, before we will be able to use system timer interrupts, we need to initialize one of the compare registers with a non-zero value, the larger the value is - the later an interrupt will be generated. This is done in [timer_init](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/timer.c#L8) function.
 
