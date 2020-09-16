@@ -286,9 +286,9 @@ ret_from_fork:
     blr    x19         //should never return
 ```
 
-Where do `x19` and `x20` come from? See code `copy_process` above, which saves of `fn` and `arg` to`task_struct`. When switching to P, the kernel restores `fn` and `arg` to from `task_struct` to `x19` and `x20`. 
+Where do `x19` and `x20` come from? See code `copy_process` above, which saves `fn` (the process's main function) and `arg` (the argument passed to the process) to`task_struct`. When switching to P, the kernel restores `fn` and `arg` from `task_struct` to `x19` and `x20`. 
 
-As you can see `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`. `x19` and `x20` are restored from the `cpu_context` just before `ret_from_fork` function is called. 
+As a result, `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`. 
 
 ### Aside: Memory allocation
 
@@ -370,11 +370,3 @@ We will augment the scheduling algorithm for preemptive multitasking later.
 ### Conclusion
 
 We have seen important nuts & bolts of multitasking. The subsequent experiment will enable task preemption. We will show a detailed workflow of context switch there. 
-
-##### Previous Page
-
-3.5 [Interrupt handling: Exercises](../../docs/lesson03/exercises.md)
-
-##### Next Page
-
-4.2 [Process scheduler: Scheduler basic structures](../../docs/lesson04/linux/basic_structures.md)
