@@ -1,4 +1,4 @@
-# 4.1: Preemptive Multitasking
+# 4b: Preemptive Multitasking
 
 ## Objectives
 
@@ -74,13 +74,11 @@ First of all, it decreases current task's counter. If the counter is greater the
 
 We will see why interrupts must be enabled during scheduler execution in the next section.
 
-> 
-
 ## How scheduling works with interrupt entry/exit?
 
-With preemptive scheduling, the kernel must save & restore CPU contexts for each task being interrupted. This is because, e.g. a task A may be interrupted at any point and descheduled. Later, when the kernel reschedules A, A should resume from where it is interrupted. 
+With preemptive scheduling, the kernel must save & restore CPU contexts for each task being interrupted. This is because, e.g. a task A may be interrupted at any point and get descheduled. Later, when the kernel reschedules A, A should resume from where it is interrupted. 
 
-In previous baremetal experiments with only one task, we have seen how [kernel_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L17) and [kernel_exit](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L4) macros save and restore general-purpose CPU regs upon switch to/from an interrupt/exception handler. (where was the CPU state saved?) There, we rely on that the hardware automatically saves exception return address and CPU status in registers, `elr_el1` register and `spsr_el` register. When `eret` is executed, CPU restores execution from these registers.
+In previous baremetal experiments with only one task, we have seen how [kernel_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L17) and [kernel_exit](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L4) macros save and restore general-purpose CPU regs upon switch to/from an interrupt/exception handler. (btw, where was the CPU state saved?) There, we rely on that the hardware automatically saves exception return address and CPU status in registers, `elr_el1` register and `spsr_el` register. When `eret` is executed, CPU restores execution from these registers.
 
 With multitasking, the kernel now has to create per-task copies of CPU context in memory: general-purpose registers plus `elr_el1` and `spsr_el`. 
 
@@ -144,9 +142,9 @@ Our implementation choice is on the current task's kernel stack (not in `task_st
 
 <img src="figures/sched-5.png" width="600" />
 
-**Note:** until now, the kernel has not executed `eret` for the previous irq. This is an implementation choice made for this particular experiment. 
+**Note:** until now, the kernel has NOT executed `eret` for the previous irq. This is fine, as an implementation choice made for this particular experiment. 
 
-How can we execute task 2 in the context of the previous irq? It works because ARM64 CPU does not differentiate execution in an irq context vs. in an exception context. All it knows is the current EL (we always stay at EL1 before/after the irq) and the irq enable status. And irqs have been enabled previously in [timer_tick](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L70) before `schedule` was called. 
+How can we execute task 2 in the context of the previous irq? It works because ARM64 CPU does not differentiate execution in an irq context vs. in an exception (i.e. syscall) context. All the CPU knows is the current EL (we always stay at EL1 before/after the irq) and the irq enable status. And irqs have been enabled previously in [timer_tick](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L70) before `schedule` was called. 
 
 > Nevertheless, there's a more common design in which the kernel returns from the irq context before switching to a new task. See "alternative design" below. 
 
@@ -163,7 +161,7 @@ How can we execute task 2 in the context of the previous irq? It works because A
 
 **Scheduling out task 2**
 
-The kernel calls `scheudle()`. It observes that all tasks have their counters set to 0 and set counters to their tasks priorities.
+The kernel calls `schedule()`. It observes that all tasks have their counters set to 0 and set counters to their tasks priorities.
 
 `schedule` selects init task to run. (This is because all tasks now have their counters set to 1 and init task is the first in the list). But actually, it would be fully legal for `schedule` to select task 1 or task 2 at this point, because their counters has equal values. We are more interested in the case when task 1 is selected so let's now assume that this is what had happened.
 

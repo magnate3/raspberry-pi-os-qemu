@@ -6,21 +6,25 @@
 
 Our kernel is evolving from an "embedded" kernel which often lacks user/kernel separation to a multiprogrammed kernel. 
 
-* Run processes in EL0
+* Run tasks in EL0
+
 * Add the syscall mechanism
+
 * Implement a few basic syscalls
+
+NOTE: this experiment enables running user/kernel at different ELs. Yet, it does not NOT give each task its own address space — we are going to tackle this issue in lesson 6!
+
 
 <img src="../lesson06/figures/screen.gif" style="zoom: 67%;" />
 
 ## Roadmap
 
-<!-- TBD--->
+We will: 
 
-First of all, we will move all user processes to EL0, which restricts their access to privileged processor operations. 
-
-There is also a third aspect of process isolation: each process should have its own independent view of memory — we are going to tackle this issue in the lesson 6.
-
-
+1. Implement the syscall mechanism, in particular switch between EL0 and EL1 (you have already done something similar in previous experiments!)
+2. Implement two mechanisms that put user tasks to EL0: 
+   1. moving a kernel task EL1 -> EL0
+   2. forking an existing user task at EL0
 
 ## Syscall implementation
 
@@ -149,7 +153,7 @@ Overview: upon its creation, the kernel task calls its main function, `kernel_pr
 
 **Code walkthrough**
 
-First create a process as we did before. This is a "kernel" process to execute at EL1. 
+First create a process (i.e. a task) as we did before. This is a "kernel" process to execute at EL1. 
 
 ```
 // kernel.c
@@ -218,7 +222,7 @@ struct pt_regs * task_pt_regs(struct task_struct *tsk){
 
 <!-------improve writing----->
 
-This happens in the middle of the [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/entry.S#L188) function.
+As you might notice `ret_from_fork` has been updated. This happens in the middle of the [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/entry.S#L188) function.
 
 ```
 .globl ret_from_fork
@@ -232,7 +236,9 @@ ret_to_user:
     kernel_exit 0
 ```
 
-As you might notice `ret_from_fork` has been updated. Now, after a kernel thread finishes, the execution goes to the `ret_to_user` label, here we disable interrupts and perform normal exception return, using previously prepared processor state.
+Now, after a kernel thread finishes, the execution goes to the `ret_to_user` label, here we disable interrupts and perform normal exception return, using previously prepared processor state.
+
+If you get confused, revisit the "overview" figure above. 
 
 #### Method 2: Forking user processes
 
