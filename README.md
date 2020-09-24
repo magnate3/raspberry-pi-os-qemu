@@ -76,5 +76,5 @@ Derived from the RPi OS project and its tutorials, which is modeled after the [L
 
 ## Grading
 
-[Weights distribution among experiments](./docs/Grading.md)
+[Weights distribution among experiments](./docs/grading.md)
 
