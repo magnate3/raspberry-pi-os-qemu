@@ -2,7 +2,10 @@
 
 ## Objectives
 
-Make our tiny kernel capable of enforcing separate virtual address spaces, and support user demand paging. 
+Make our tiny kernel capable of: 
+
+1. enforcing separate virtual address spaces, and 
+2. user-level demand paging. 
 
 <!--- todo: show a gif screenshot --->
 
@@ -80,7 +83,7 @@ This means that each pgtable is `512 * 8 = 4096` bytes or 4 KB. **A pgtable is e
 
 ### Section (2MB) mapping
 
-This is specific to ARM64 for mapping large parts of continuous physical memory. In this case, instead of 4 KB pages, we can directly map 2 MB blocks that are called sections. This allows to eliminate 1 level of translation. The translation diagram, in this case, looks like the following.
+This is specific to ARM64 for mapping large parts of continuous physical memory. In this case, instead of 4 KB pages, we can directly map 2 MB blocks that are called sections. This allows to eliminate one single level of translation. The translation diagram, in this case, looks like the following.
 
 ```
                            Virtual address                                               Physical Memory
@@ -176,7 +179,7 @@ The CPU also enforces that software at EL0 can never access virtual addresses st
 
 ### **Adjusting kernel addresses** 
 
-All absolute kernel addresses must start with `0xffff`. There are 2 places in the RPi OS source code shall be changed. 
+All absolute kernel addresses must start with `0xffff...`. There are 2 places in the kernel source code shall be changed. 
 
 * In the [linker script](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/linker.ld#L3) we specify base address of the image as `0xffff000000000000`. This will make the linker think that our image is going to be loaded at `0xffff000000000000` address, and therefore whenever it needs to generate an absolute address it will make it right. (There are a few more changes to the linker script, but we will discuss them later.) 
 
