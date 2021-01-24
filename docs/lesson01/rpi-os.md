@@ -1,5 +1,6 @@
 # Baremetal HelloWorld
 
+[toc]
 ## Objectives
 
 ![](figures/helloworld.png)
@@ -18,9 +19,9 @@ We will experience:
 
 ## Roadmap
 
-Create a Makefile project. Add bare minimum code for boot. Initialize the UART hardware. Send characters to the UART registers. 
+Create a Makefile project. Add minimum code to boot the platform. Initialize the UART hardware. Send characters to the UART registers. 
 
-## **Terms** 
+## Terms 
 
 1. Strictly speaking, this baremetal program is not a "kernel". We nevertheless call it so for ease of explanation. 
 
@@ -28,16 +29,17 @@ Create a Makefile project. Add bare minimum code for boot. Initialize the UART h
 
 ## Project structure
 
-Of all the subsequent experiments, the kernel source code has the same structure. 
 1. **Makefile** We will use the [make](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) utility to build the kernel. `make`'s behavior is configured by a Makefile, which contains instructions on how to compile and link the source code. 
 1. **src** This folder contains all of the source code.
 1. **include** All of the header files are placed here. 
+
+Note: Of all the subsequent experiments in p1, the source code has the same structure. 
 
 <!--- 1. **build.sh or build.bat** You'll need these files if you want to build the kernel using Docker. You won't need to have the make utility or the compiler toolchain installed on your laptop. --->
 
 ### Makefile walkthrough
 
-If you are not familiar with make and Makefiles, I recommend that you read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article. 
+If you are not familiar with Makefiles, read [this](http://opensourceforu.com/2012/06/gnu-make-in-detail-for-beginners/) article. 
 
 The complete Makefile: 
 
@@ -74,7 +76,7 @@ kernel8.img: $(SRC_DIR)/linker.ld $(OBJ_FILES)
     $(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
     $(ARMGNU)-objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img
 ```
-Now, let's inspect this file in detail:
+Let's inspect this file in detail:
 ```
 ARMGNU ?= aarch64-linux-gnu
 ```
@@ -145,7 +147,7 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 
 The next two lines are a little bit tricky. If you take a look at how we defined our compilation targets for both C and assembler source files, you will notice that we used the `-MMD` parameter. This parameter instructs the `gcc` compiler to create a dependency file for each generated object file. A dependency file defines all of the dependencies for a particular source file. These dependencies usually contain a list of all included headers. We need to include all of the generated dependency files so that make knows what exactly to recompile in case a header changes. 
 
-### Bake the kernel binaries!
+### Bake the kernel binaries
 
 ```
 $(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o kernel8.elf  $(OBJ_FILES)
@@ -198,9 +200,9 @@ The `.text`, `.rodata`, and `.data` sections contain kernel instructions, read-o
 
 After booting up, our kernel initializes the `.bss` section to 0; that's why we need to record the start and end of the section (hence the `bss_begin` and `bss_end` symbols) and align the section so that it starts at an address that is a multiple of 8. This eases kernel programming because the `str` instruction can be used only with 8-byte-aligned addresses.
 
-### Kernel startup
+## Kernel startup
 
-#### Booting the kernel
+### Booting the kernel
 
 boot.S contains the kernel startup code:
 
@@ -246,7 +248,7 @@ Rpi3 has 4 cores, and after the device is powered on, each core begins to execut
 
 > Q: It may make more sense to put core 1-3 in deep sleep using ``wfi``. How? 
 
-#### Kernel memory layout
+### Kernel memory layout
 
 If the current processor ID is 0, then execution branches to the `master` function:
 
@@ -286,7 +288,7 @@ Our [cheat sheet](../../cheatsheet.md) summarizes common ARM64 instructions.
 
 For official documentation, [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/index.html) is the ARMv8-A developer's guide. It's a good resource if the ARM ISA is unfamiliar to you. [This page](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.den0024a/ch09s01s01.html) specifically outlines the register usage convention in the ABI.
 
-#### The `kernel_main` function
+### The `kernel_main` function
 
 We have seen that the boot code eventually passes control to the `kernel_main` function. Let's take a look at it:
 
@@ -306,13 +308,13 @@ void kernel_main(void)
 
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
-### A bit about the Rpi3 hardware
+## A bit about the Rpi3 hardware
 
 The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 
 > Rpi4 seems more friendly to kernel hackers. 
 
-#### Memory-mapped IO
+### Memory-mapped IO
 
 On ARM-based SoCs, access to all devices is performed via memory-mapped registers. The Rpi3 SoC reserves physical memory address `0x3F000000` for IO devices. To configure a particular device, software reads/writes device registers. A device register is just a 32-bit region of memory. The meaning of each bit in each IO register is described in the SoC manual. 
 
@@ -320,7 +322,7 @@ On ARM-based SoCs, access to all devices is performed via memory-mapped register
 
 > The term "device" is heavily overloaded in many tech docs. Sometimes it means a board, e.g. "an Rpi3 device"; sometimes it means an IO peripheral, e.g. "UART device". We will be explicit. 
 
-#### UART
+### UART
 
 UART is a simple character device allowing software to send out text characters to a different machine. If you do not care about performance, UART requires very minimum software code. Therefore, it is often the first few IO devices to bring up when we build system software for a new machine. Only with UART meaning debugging is possible. (JTAG is another option which however requires more complex setup).
 
@@ -341,7 +343,7 @@ UART0/PL011: richer functions; higher speed. Yet one needs to configure the boar
 
 The above information is enough. More about Raspberry Pi UARTs: see the [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
 
-#### GPIO
+### GPIO
 
 Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIO provides a bunch of registers. Each bit in such a register corresponds to a pin on the Rpi3 board. By writing 1 or 0 to register bits, software can control the output voltage on the pins, e.g. for turning on/off LEDs connected to such pins. Reading is done in a similar fashion. The picture below shows GPIO pin headers populated on Rpi3. (Note: the picture shows Rpi2, which has the same pinout as Rpi3)
 
@@ -353,7 +355,7 @@ The GPIO can be used to configure the behavior of different GPIO pins. For examp
 
 <img src="../../images/gpio-numbers.png" alt="Raspberry Pi GPIO pin numbers" style="zoom: 50%;" />
 
-### Walkthrough: the UART code ([mini_uart.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/mini_uart.c))
+## Walkthrough: the UART code
 
 The following init code configures pin 14 & 15 as UART in/out, sets up UART clock and its modes, etc. 
 
@@ -392,7 +394,7 @@ void uart_init ( void )
 
 Here, we use the two functions `put32` and `get32`. Those functions are very simple -- read and write some data to and from a 32-bit register. You can take a look at how they are implemented in [utils.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/src/utils.S). `uart_init` is one of the most complex and important functions in this lesson, and we will continue to examine it in the next three sections.
 
-#### Init: GPIO alternative function selection 
+### Init: GPIO alternative function selection 
 
 First, we need to activate the GPIO pins. Most of the pins can be used with different IO devices. So before using a particular pin, we need to select the pin's alternative function,  a number from 0 to 5 that can be set for each pin and configures which IO device is virtually "connected" to the pin. 
 
@@ -417,7 +419,7 @@ So now you know everything you need to understand the following lines of code th
     put32(GPFSEL1,selector);
 ```
 
-#### Init: GPIO pull-up/down & how we disable it
+Init: GPIO pull-up/down & how we disable it
 
 When working with GPIO pins, you will often encounter terms such as pull-up/pull-down. These concepts are explained in great detail in [this](https://grantwinney.com/using-pullup-and-pulldown-resistors-on-the-raspberry-pi/) article. For those who are too lazy to read the whole article, I will briefly explain the pull-up/pull-down concept.
 
@@ -453,7 +455,7 @@ retain their previous state.
     put32(GPPUDCLK0,0);
 ```
 
-#### Init: Mini UART
+### Init: Mini UART
 
 Now our Mini UART is connected to the GPIO pins, and the pins are configured. The rest of the `uart_init` function is dedicated to Mini UART initialization. 
 
@@ -521,7 +523,7 @@ The `system_clock_freq` is 250 MHz, so we can easily calculate the value of `bau
 ```
 After this line is executed, the Mini UART is ready for work!
 
-#### Sending data over UART
+### Sending data over UART
 
 After the Mini UART is ready, we can try to use it to send and receive some data. To do this, we can use the following two functions:
 
@@ -566,13 +568,13 @@ This function just iterates over all characters in a string and sends them one b
 **Low efficiency?** Apparently Tx/Rx with busy wait burn lots of CPU cycles for no good. It's fine for our baremetal program -- simple & less error-prone. Production software often do interrupt-driven Rx/Tx. 
 
 
-### Take the kernel for a spin
+## Take the kernel for a spin
 
 <!-- 1. Execute `./build.sh` or `./build.bat` from [src/lesson01](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01) in order to build the kernel. -->
 
 Run `make` to build the kernel. 
 
-#### Rpi3
+### Rpi3
 
 The Raspberry Pi startup sequence is the following (simplified):
 
@@ -620,7 +622,7 @@ The steps above assume that you have Raspbian installed on your SD card. It is a
 
 Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocumented. For more information about the Raspberry Pi startup sequence, you can refer to some unofficial sources, like [this](https://raspberrypi.stackexchange.com/questions/10442/what-is-the-boot-sequence) StackExchange question or [this](https://github.com/DieterReuter/workshop-raspberrypi-64bit-os/blob/master/part1-bootloader.md) Github repository.
 
-#### QEMU
+### QEMU
 
 **Setup**
 

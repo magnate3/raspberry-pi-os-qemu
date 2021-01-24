@@ -1,4 +1,23 @@
-# Sharpen your tools
+# Sharpen your tools                                
+
+* [About the docs](#about-the-docs)                                                            
+  * [Terms](#terms)                                                                            
+* [Dev environment](#dev-environment)                                                          
+  * [Host OS](#host-os)                                                                        
+  * [Toolchain](#toolchain)                                                                    
+* [Platform Setup](#platform-setup)                                                            
+  * [Approach 1: the real hardware](#approach-1-the-real-hardware)                             
+    * [Check list](#check-list)                                                                
+    * [Prep Raspberry Pi 3 Model B](#prep-raspberry-pi-3-model-b)                              
+    * [Load Raspbian OS to the SD card](#load-raspbian-os-to-the-sd-card)                      
+    * [Plug in the serial cable](#plug-in-the-serial-cable)                                    
+    * [Powering up RPi3](#powering-up-rpi3)                                                    
+    * [An example setup](#an-example-setup)                                                    
+    * [Test your dev workflow](#test-your-dev-workflow)                                        
+      * [Background: what's on SD card?](#background-whats-on-sd-card)                         
+    * [Update config\.txt](#update-configtxt)                                                  
+    * [Build &amp; load sample baremetal program](#build--load-sample-baremetal-program)       
+  * [Approach 2: QEMU](#approach-2-qemu)                                                       
 
 ## About the docs
 
@@ -6,30 +25,34 @@ Be aware: it may contain URLs referring to the upstream git repo, which may slig
 
 ### Terms
 
-baremetal
-
-kernel, kernel binary, kernel image
+baremetal; kernel; kernel binary; kernel image
 
 ## Dev environment
 
-### Host OS
+This is where you develop kernel code. 
 
-- Linux: Ubuntu 18.04
-- Windows: WSL 
-- OS X: (??)
+We have configured departmental server(s) for you to use. See [here](../../ssh-proxy.md). You can develop on your local machine and test on the servers. 
+
+Alternatively, you may do everything on your local machine, here are suggestions: 
+
+- Linux. Recommended: Ubuntu 20.04 LTS. 
+- Windows: WSL or WSL2. See [instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10#:~:text=To%20check%20your%20version%20and,command%20in%20Windows%20Command%20Prompt).
+- OS X: (likely HomeBrew is needed. Not tested)
 
 ### Toolchain
 
-Use the one provided by Ubuntu. Save the hassle from compiling from source, etc.
+These are compiler, linker, etc. for us to generate the kernel code. Use the one provided by Ubuntu 
 
 ```
 $ sudo apt install gcc-aarch64-linux-gnu 
 
 $ aarch64-linux-gnu-gcc --version
-aarch64-linux-gnu-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
+aarch64-linux-gnu-gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
 ```
 
-## Platform Setup 
+## Test Platform  
+
+This is where you run the kernel code. 
 
 ### Approach 1: the real hardware 
 
@@ -138,7 +161,9 @@ Strictly speaking, Docker is not a required dependency. It is just convenient to
 
 ### Approach 2: QEMU 
 
-Need QEMU (>v2.12). Newer version is likely fine. The following shows the default QEMU coming with Ubuntu 18.04 is too old. 
+You are required to compile QEMU from source. 
+
+Need QEMU >v2.12. Newer version is likely fine. The following shows the default QEMU coming with Ubuntu 18.04 is too old.  For instance: 
 
 ```
 $ qemu-system-aarch64  --version
@@ -146,7 +171,7 @@ QEMU emulator version 2.11.1(Debian 1:2.11+dfsg-1ubuntu7.26)
 Copyright (c) 2003-2017 Fabrice Bellard and the QEMU Project developers
 ```
 
-Build QEMU from source. 
+Now, build QEMU from source. Clean any pre-installed qemu and install necessary tools: 
 
 ```
 sudo apt remove qemu-system-arm
@@ -154,7 +179,7 @@ sudo apt install gdb-multiarch build-essential pkg-config
 sudo apt install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
 ```
 
-Grab source.  We use v4.2. 
+Grab the source.  We specify QEMU v4.2. 
 
 ```
 git clone git://git.qemu.org/qemu.git
@@ -165,7 +190,11 @@ make -j`nproc`
 export PATH="$(pwd)/aarch64-softmmu:${PATH}"
 ```
 
-Try QEMU & check its version. The supported machines should include Rpi3
+If successful, this will result in QEMU executables in ./aarch64-softmmu/. The last line above adds the path to our search path. 
+
+If you encounter compilation errors (e.g. unmet dependencies), make sure you run all `apt get` commands above. 
+
+Now try QEMU & check its version. The supported machines should include Rpi3
 
 ```
 $ qemu-system-aarch64  --version
@@ -177,7 +206,7 @@ raspi2               Raspberry Pi 2
 raspi3               Raspberry Pi 3
 ```
 
-Test QEMU with Rpi3 baremetal code
+Test QEMU with Rpi3 baremetal code (NOTE: this repo is for validating your toolchain & QEMU build; it is NOT our course project)
 
 ```
 git clone https://github.com/fxlin/raspi3-tutorial.git
@@ -193,3 +222,13 @@ If everything works fine, you should see QMEU print out:
 ```
 My serial number is: 0000000000000000
 ```
+>  Note: the test program runs an infinite loop which will cause high CPU usage on your host machine. Kill the test program timely. 
+
+On Linux (terminal) 
+![](test-qemu.gif)
+
+On Windows (WSL) 
+
+![](test-qemu-wsl.gif)
+
+
