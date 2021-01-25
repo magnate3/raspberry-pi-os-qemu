@@ -1,4 +1,4 @@
-# Baremetal HelloWorld
+# 1: Baremetal HelloWorld
 
 [toc]
 ## Objectives
@@ -7,7 +7,7 @@
 
 We will build: a minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
 
-We will experience: 
+Students will experience: 
 
 1. The C project structure
 

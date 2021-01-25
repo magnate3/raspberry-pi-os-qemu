@@ -4,7 +4,7 @@
 
 A tiny kernel *incrementally built* for OS education. 
 
-We wills start with a minimal, baremetal code piece. Then we will add a set of kernel features in small doses through a series of experiments. 
+We will start with minimal, baremetal code. Then add kernel features in small doses as a series of experiments. 
 
 Each experiment is a self-contained and can run on both Rpi3 hardware and QEMU. 
 
@@ -57,20 +57,20 @@ Derived from the RPi OS project and its tutorials, which is modeled after the [L
       * [Power on + UART bring up](docs/lesson01/rpi-os.md)
       * [Simplifying dev workflow](docs/lesson01/workflow.md)
       <!---- * [Exp](docs/lesson01/exercises.md) ----->
-1. **Exception elevated** (p1 exp2) 
+2. **Exception elevated** (p1 exp2) 
       * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
       <!---- * [Exp](docs/lesson02/exercises.md) ----->
-1. **Heartbeats on** (p1 exp3) 
+3. **Heartbeats on** (p1 exp3) 
       * [Interrupt handling](docs/lesson03/rpi-os.md)
       <!----* [Exp](docs/lesson03/exercises.md) ----->
-1. **Process scheduler** (p1 exp4) 
+4. **Process scheduler** (p1 exp4) 
       * [A. Cooperative](docs/lesson04a/rpi-os.md) 
       * [B. Preemptive](docs/lesson04b/rpi-os.md) 
       <!---- * [Exercises](docs/lesson04a/exercises.md) ----->
-1. **A world of two lands** (p1 exp5) 
+5. **A world of two lands** (p1 exp5) 
       * [User processes and system calls](docs/lesson05/rpi-os.md) 
       <!---- * [Exercises](docs/lesson05/exercises.md) ----->
-1. **Into virtual** (p1 exp6) 
+6. **Into virtual** (p1 exp6) 
       * [Virtual memory management](docs/lesson06/rpi-os.md) 
       <!---- * [Exercises](docs/lesson06/exercises.md) ----->
 

@@ -1,4 +1,4 @@
-# 3.1: Interrupts
+# 3: Interrupts
 
 ## Objectives
 
@@ -7,14 +7,12 @@ We will build a baremetal program that prints out messages, as driven by periodi
 You will learn and experience with: 
 
 1. Exception/interrupt vectors
-
 2. Handling interrupts
-
 3. Program hardware timers
 
-**"Interrupts" or "irq"?** We use these two terms interchangeably. Most kernel documents use the latter. 
+## Terms
 
-
+"Interrupts" or "irq"? We use these two terms interchangeably. Many kernel documents use the latter. 
 
 ## Background: interrupts & exceptions in ARM64
 
@@ -374,11 +372,3 @@ Here we first update compare register so that that next interrupt will be genera
 ### Conclusion
 
 The last thing that you might want to take a look at is the [kernel_main](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/kernel.c#L7) function where all previously discussed functionality is orchestrated. After you compile and run the sample it should print "Timer interrupt received" message after an interrupt is taken. Please, try to do it by yourself and don't forget to carefully examine the code and experiment with it.
-
-**Previous Page**
-
-2.3 [Processor initialization: Exercises](../../docs/lesson02/exercises.md)
-
-**Next Page**
-
-3.2 [Interrupt handling: Low-level exception handling in Linux](../../docs/lesson03/linux/low_level-exception_handling.md)

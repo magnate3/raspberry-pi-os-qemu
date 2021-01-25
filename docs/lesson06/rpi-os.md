@@ -1,4 +1,4 @@
-# 6.1: Virtual memory (VM)
+# 6: Virtual memory (VM)
 
 ## Objectives
 

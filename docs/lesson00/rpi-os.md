@@ -1,4 +1,4 @@
-# Sharpen your tools                                
+# 0: Sharpen your tools                                
 
 * [About the docs](#about-the-docs)                                                            
   * [Terms](#terms)                                                                            

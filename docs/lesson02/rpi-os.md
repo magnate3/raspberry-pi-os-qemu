@@ -1,4 +1,4 @@
-# Processor initialization 
+# 2: Processor initialization 
 
 ## Objectives
 We are going to build: 
@@ -27,7 +27,7 @@ EL2 is used in a scenario when we are using a hypervisor. In this case hyperviso
 
 EL3 pertains to Arm TrustZone. It is used for transitions from ARM "Secure World" to "Insecure world". This abstraction exist to provide full hardware isolation between the software running in two different "worlds". Application from an "Insecure world" can in no way access or modify information (both instruction and data) that belongs to "secure world", and this restriction is enforced at the hardware level. 
 
-We will do TrustZone experiments soon!
+> We will do TrustZone experiments soon!
 
 ### Switching ELs
 
@@ -65,9 +65,7 @@ Let's not reinvent the wheel and use one of  [existing printf implementations](h
 
 <!--- Todo: add GDB debugging ---> 
 
-GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. Here are my quick notes: 
-https://myuva.sharepoint.com/sites/cs6456-f20/_layouts/OneNote.aspx?id=%2Fsites%2Fcs6456-f20%2FSiteAssets%2Fcs6456-f20%20Notebook&wd=target%28_Collaboration%20Space%2Fproj1-kernel%20Notes.one%7CB7C215E6-4124-4257-AAC4-2C0A83DAEB0B%2FOn%20using%20GDB%7C39046454-8889-4976-83AF-BCD7438B1257%2F%29
-onenote:https://myuva.sharepoint.com/sites/cs6456-f20/SiteAssets/cs6456-f20%20Notebook/_Collaboration%20Space/proj1-kernel%20Notes.one#On%20using%20GDB&section-id={B7C215E6-4124-4257-AAC4-2C0A83DAEB0B}&page-id={39046454-8889-4976-83AF-BCD7438B1257}&end
+GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. A quick note is [here](../../gdb.md).
 
 
 ## Code Walkthrough
