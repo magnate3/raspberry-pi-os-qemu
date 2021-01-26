@@ -14,8 +14,7 @@ Our kernel is evolving from an "embedded" kernel which often lacks user/kernel s
 
 NOTE: this experiment enables running user/kernel at different ELs. Yet, it does not NOT give each task its own address space — we are going to tackle this issue in lesson 6!
 
-
-<img src="../lesson06/figures/screen.gif" style="zoom: 67%;" />
+![](figures/screen.gif)
 
 ## Roadmap
 

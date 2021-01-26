@@ -30,7 +30,7 @@ Single step
 (gdb) si 
 ```
 
-![gdb-si](gdb-si.png)
+![gdb-si](images/gdb-si.png)
 
 Dump register contents
 
@@ -38,7 +38,7 @@ Dump register contents
 (gdb) info reg 
 ```
 
-![gdb-reg](gdb-reg.png)
+![gdb-reg](images/gdb-reg.png)
 
 ## Troubleshooting 
 

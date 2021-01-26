@@ -58,13 +58,9 @@ This is where you run the kernel code.
 
 #### Check list
 
-* **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/)
-
-<img src="figures\rpi3.jpg" alt="img" style="zoom: 50%;" />
-
-* **Required:** A USB to TTL serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable). Connection **inside** the dongle: black-GND; green-TXD; white-RXD; red-VCC.
-
-<img src="figures\uartcable.jpg" alt="uart-cable" style="zoom:33%;" />
+| ![](figures/rpi3.jpg) |  ![](figures/uartcable.jpg)    |
+| ------------- | ---- |
+| **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) | **Required:** A USB to TTL serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable). Connection **inside** the dongle: black-GND; green-TXD; white-RXD; red-VCC. |
 
 * **Required:** A micro SD card. The capacity can be humble (e.g. 4GB). The speed does not matter much. The one I used was $6.  [Rpi's official page about uSD]([https://www.raspberrypi.org/documentation/installation/sd-cards.md))
 
@@ -102,7 +98,9 @@ Power cycling Rpi3, you should see Linux kernel console output on PC terminal.
 
 This is my desktop when I hack with the Rpi3 kernel. 
 
-<img src="figures/setup.png" style="zoom:67%;" />
+![](setup.png)
+
+
 
 #### Test your dev workflow
 

@@ -125,9 +125,9 @@ tl;dr: VSCode will connect to the CS server (Linux) using SSH under the hood. To
 
 The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`), which different from the ssh client that you run in WSL. The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
 
-| ![](powershell.png) | ![](powershell-sshkeygen.png) | ![](wslroot.png)  |
-| ------------------- | ----------------------------- | ----------------- |
-| *Launch PowerShell* | *ssh-keygen in PowerShell*    | *Access WSL root* |
+| ![](images/powershell.png) | ![](images/powershell-sshkeygen.png) | ![](images/wslroot.png) |
+| -------------------------- | ------------------------------------ | ----------------------- |
+| *Launch PowerShell*        | *ssh-keygen in PowerShell*           | *Access WSL root*       |
 
 Or, you can you copy existing ssh keys and config (e.g. from WSL `~/.ssh/`) to the location mentioned above. Btw, the way to access WSL's root filesystem is to type `\\wsl$` in the explorer address bar. See the figure above. 
 

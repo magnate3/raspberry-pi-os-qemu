@@ -1,29 +1,5 @@
 # 1: Baremetal HelloWorld
 
-  * [Objectives](#objectives)
-  * [Roadmap](#roadmap)
-  * [Terms](#terms)
-  * [Project structure](#project-structure)
-    * [Makefile walkthrough](#makefile-walkthrough)
-    * [Build targets &amp; rules](#build-targets--rules)
-    * [Bake the kernel binaries](#bake-the-kernel-binaries)
-    * [The linker script](#the-linker-script)
-  * [Kernel startup](#kernel-startup)
-    * [Booting the kernel](#booting-the-kernel)
-    * [Kernel memory layout](#kernel-memory-layout)
-    * [The kernel\_main function](#the-kernel_main-function)
-  * [A bit about the Rpi3 hardware](#a-bit-about-the-rpi3-hardware)
-    * [Memory\-mapped IO](#memory-mapped-io)
-    * [UART](#uart)
-    * [GPIO](#gpio)
-  * [Walkthrough: the UART code](#walkthrough-the-uart-code)
-    * [Init: GPIO alternative function selection](#init-gpio-alternative-function-selection)
-    * [Init: Mini UART](#init-mini-uart)
-    * [Sending data over UART](#sending-data-over-uart)
-  * [Take the kernel for a spin](#take-the-kernel-for-a-spin)
-    * [Rpi3](#rpi3)
-    * [QEMU](#qemu)
-
 ## Objectives
 
 ![](figures/helloworld.png)
@@ -289,8 +265,7 @@ Here, we clean the `.bss` section by calling `memzero`. We will define this func
     mov    sp, #LOW_MEMORY
     bl    kernel_main
 ```
-
-<img src="figures/mem-0.png" alt="fig-mem" style="zoom:20%;" />
+![](figures/mem-0.png)
 
 After cleaning the `.bss` section, the kernel initializes the stack pointer and passes execution to the `kernel_main` function. The Rpi3 loads the kernel at address 0 (QEMU loads at 0x80000); that's why the initial stack pointer can be set to any location high enough so that stack will not override the kernel image when it grows sufficiently large. `LOW_MEMORY` is defined in [mm.h](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson01/include/mm.h) and is equal to 4MB. As our kernel's stack won't grow very large and the image itself is tiny, 4MB is more than enough for us. 
 
@@ -314,7 +289,6 @@ For official documentation, [here](http://infocenter.arm.com/help/index.jsp?topi
 ### The `kernel_main` function
 
 We have seen that the boot code eventually passes control to the `kernel_main` function. Let's take a look at it:
-
 ```
 #include "mini_uart.h"
 
@@ -332,13 +306,11 @@ void kernel_main(void)
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
 ## A bit about the Rpi3 hardware
-
 The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 
 > Rpi4 seems more friendly to kernel hackers. 
 
 ### Memory-mapped IO
-
 On ARM-based SoCs, access to all devices is performed via memory-mapped registers. The Rpi3 SoC reserves physical memory address `0x3F000000` for IO devices. To configure a particular device, software reads/writes device registers. A device register is just a 32-bit region of memory. The meaning of each bit in each IO register is described in the SoC manual. 
 
 <!---- Take a look at section 1.2.3 ARM physical addresses in the SoC manual and the surrounding documentation for more context on why we use `0x3F000000` as a base address (even though `0x7E000000` is used throughout the manual). ---->
@@ -346,7 +318,6 @@ On ARM-based SoCs, access to all devices is performed via memory-mapped register
 > The term "device" is heavily overloaded in many tech docs. Sometimes it means a board, e.g. "an Rpi3 device"; sometimes it means an IO peripheral, e.g. "UART device". We will be explicit. 
 
 ### UART
-
 UART is a simple character device allowing software to send out text characters to a different machine. If you do not care about performance, UART requires very minimum software code. Therefore, it is often the first few IO devices to bring up when we build system software for a new machine. Only with UART meaning debugging is possible. (JTAG is another option which however requires more complex setup).
 
 In the simplest form, software writes ascii values to UART registers. The UART device converts written values to a sequence of high and low voltages on wire. This sequence is transmitted to your via the `TTL-to-serial cable` and is interpreted by your terminal emulator (e.g. PuTTY on Windows). 
@@ -370,13 +341,13 @@ The above information is enough. More about Raspberry Pi UARTs: see the [officia
 
 Another IO device is GPIO [General-purpose input/output](https://en.wikipedia.org/wiki/General-purpose_input/output). GPIO provides a bunch of registers. Each bit in such a register corresponds to a pin on the Rpi3 board. By writing 1 or 0 to register bits, software can control the output voltage on the pins, e.g. for turning on/off LEDs connected to such pins. Reading is done in a similar fashion. The picture below shows GPIO pin headers populated on Rpi3. (Note: the picture shows Rpi2, which has the same pinout as Rpi3)
 
-<img src="../../images/gpio-pins.jpg" alt="Raspberry Pi GPIO pins" style="zoom: 33%;" />
+![](../images/gpio-pins.jpg)
 
 An SoC often has limited number of pins. Software can control the use of these pins, e.g. for GPIO or for UART. Software does so by writing to specific memory-mapped registers. 
 
 The GPIO can be used to configure the behavior of different GPIO pins. For example, to be able to use the Mini UART, we need to activate pins 14 and 15 and set them up to use this device. The image below illustrates how numbers are assigned to the GPIO pins:
 
-<img src="../../images/gpio-numbers.png" alt="Raspberry Pi GPIO pin numbers" style="zoom: 50%;" />
+![](../images/gpio-numbers.png)
 
 ## Walkthrough: the UART code
 
@@ -423,11 +394,11 @@ First, we need to activate the GPIO pins. Most of the pins can be used with diff
 
 See the list of all available GPIO alternative functions in the image below (taken from page 102 of the SoC manual)
 
-![Raspberry Pi GPIO alternative functions](../../images/alt.png?raw=true)
+![Raspberry Pi GPIO alternative functions](../images/alt.png)
 
 Here you can see that pins 14 and 15 have the TXD1 and RXD1 alternative functions available. This means that if we select alternative function number 5 for pins 14 and 15, they will be used as a Mini UART Transmit Data pin and Mini UART Receive Data pin, respectively. The `GPFSEL1` register is used to control alternative functions for pins 10-19. The meaning of all the bits in those registers is shown in the following table (page 92 of the SoC manual):
 
-![Raspberry Pi GPIO function selector](../../images/gpfsel1.png?raw=true)
+![Raspberry Pi GPIO function selector](../images/gpfsel1.png)
 
 So now you know everything you need to understand the following lines of code that are used to configure GPIO pins 14 and 15 to work with the Mini UART device:
 

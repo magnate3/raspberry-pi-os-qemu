@@ -2,6 +2,8 @@
 
 ## Objectives
 
+![](qemu-sched.gif)
+
 A minimum kernel that can schedule multiple tasks in a preemptive fashion. With this experiment, our tiny kernel is more like a "real-time kernel" commonly seen in embedded systems, e.g. FreeRTOS.
 
 1. Preempt tasks with time interrupts

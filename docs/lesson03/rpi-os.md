@@ -1,5 +1,7 @@
 # 3: Interrupts
 
+![](images/qemu-timer.gif)
+
 ## Objectives
 
 We will build a baremetal program that prints out messages, as driven by periodic interrupts from a hardware timer. 
@@ -9,6 +11,7 @@ You will learn and experience with:
 1. Exception/interrupt vectors
 2. Handling interrupts
 3. Program hardware timers
+
 
 ## Terms
 
@@ -369,6 +372,46 @@ void handle_timer_irq( void )
 
 Here we first update compare register so that that next interrupt will be generated after the same time interval. Next, we acknowledge the interrupt by writing 1 to the `TIMER_CS` register. In the documentation `TIMER_CS` is called "Timer Control/Status" register. Bits [0:3] of this register can be used to acknowledge interrupts coming from one of the 4 available interrupt lines.
 
-### Conclusion
+## Hacking tips-- observe interrupts with QEMU**
+
+```
+qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D test.log 
+```
+
+Explanation: -d int ---> enable interrupt dedug       -D test.log  ----> put debug msg to a file test.log
+
+Sample log from executing this project:
+
+```
+Exception return from AArch64 EL2 to AArch64 EL1 PC 0x80038
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+```
+
+
+
+## Conclusion
 
 The last thing that you might want to take a look at is the [kernel_main](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/kernel.c#L7) function where all previously discussed functionality is orchestrated. After you compile and run the sample it should print "Timer interrupt received" message after an interrupt is taken. Please, try to do it by yourself and don't forget to carefully examine the code and experiment with it.

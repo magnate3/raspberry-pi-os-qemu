@@ -1,8 +1,8 @@
 # 4a: Cooperative Multitasking
 
-## Objectives
-
 We will build a minimum kernel that can schedule multiple cooperative tasks. 
+
+![](qemu-sched.gif)
 
 ## Roadmap
 From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
