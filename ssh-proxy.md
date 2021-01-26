@@ -5,9 +5,10 @@
     * [2\. Connect to CS servers using one line of command](#2-connect-to-cs-servers-using-one-line-of-command)
     * [3\. Save connection info in SSH config](#3-save-connection-info-in-ssh-config)
   * [Remote development with VSCode](#remote-development-with-vscode)
-      * [Launch a terminal](#launch-a-terminal)
-      
-      * [File browsing &amp; editing](#file-browsing--editing)
+    * [Windows caveat 1: ssh keys](#windows-caveat-1-ssh-keys)
+    * [Windows caveat 2: an outdated ssh client](#windows-caveat-2-an-outdated-ssh-client)
+    * [Launch a terminal](#launch-a-terminal)
+    * [File browsing &amp; editing](#file-browsing--editing)
 
 This document describes server resources and how to connect for development. 
 
@@ -120,7 +121,7 @@ An official tutorial is [here](https://code.visualstudio.com/docs/remote/ssh).
 
 tl;dr: VSCode will connect to the CS server (Linux) using SSH under the hood. To do so you install the "Remote development" [package](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) which will install the "Remote.SSH" extension for VSCode. 
 
-#### Windows caveat 1: ssh keys
+### Windows caveat 1: ssh keys
 
 The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`), which different from the ssh client that you run in WSL. The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
 
@@ -130,7 +131,7 @@ The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32
 
 Or, you can you copy existing ssh keys and config (e.g. from WSL `~/.ssh/`) to the location mentioned above. Btw, the way to access WSL's root filesystem is to type `\\wsl$` in the explorer address bar. See the figure above. 
 
-#### Windows caveat 2: an outdated ssh client 
+### Windows caveat 2: an outdated ssh client 
 
 The current VSCode has a bug that breaks ssh with jumphost. You have to manually fix it by following [this](https://github.com/microsoft/vscode-remote-release/issues/18#issuecomment-507258777). In a nutshell, manual download a newer win32 ssh to overwrite the one shipping with Win 10 (it's a good idea to save a back up). Window's security mechanism is in your way. Work around it. 
 
@@ -144,13 +145,13 @@ Now, you should be good to go with VSCode.
 
 Make sure you have the Remote.SSH extension installed. Click "Remote Explorer" on the left bar. The extension will pick up your ssh config file (again that's `C:/Users/%USERNAME%/.ssh/config`) and present a list of hosts recognized. Click one to connect to it. The extension will copy a bunch of stuffs to the host and launch some daemon on the host. Then you are connected. 
 
-#### Launch a terminal
+### Launch a terminal
 
 After connection, click "remote" on the left bar to bring up a remote terminal, in which you can execute commands to build projects, etc. Make sure to click the "+" sign to create a new terminal. 
 
 ![image-20210124192109456](images/vscode-remote-terminal.png)
 
-#### File browsing & editing
+### File browsing & editing
 
 Then you will specify a remote folder on the server to "open": 
 

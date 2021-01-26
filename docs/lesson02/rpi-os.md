@@ -1,6 +1,23 @@
 # 2: Processor initialization 
 
+  * [Objectives](#objectives)
+  * [Background: Exception levels (EL)](#background-exception-levels-el)
+    * [Switching ELs](#switching-els)
+  * [Enhanced debugging](#enhanced-debugging)
+    * [Bring up printf()](#bring-up-printf)
+    * [QEMU \+ GDB debugging](#qemu--gdb-debugging)
+  * [Code Walkthrough](#code-walkthrough)
+    * [Finding out the current EL](#finding-out-the-current-el)
+    * [Switching to EL1](#switching-to-el1)
+      * [SCTLR\_EL1, System Control Register (EL1)](#sctlr_el1-system-control-register-el1)
+      * [HCR\_EL2, Hypervisor Configuration (EL2)](#hcr_el2-hypervisor-configuration-el2)
+      * [SCR\_EL3, Secure Configuration (EL3)](#scr_el3-secure-configuration-el3)
+      * [SPSR\_EL3, Saved Program Status (EL3)](#spsr_el3-saved-program-status-el3)
+      * [ELR\_EL3, Exception Link (EL3)](#elr_el3-exception-link-el3)
+  * [Conclusion](#conclusion)
+
 ## Objectives
+
 We are going to build: 
 
 A baremetal program that can switch among CPU exception levels and print out the current level. 
