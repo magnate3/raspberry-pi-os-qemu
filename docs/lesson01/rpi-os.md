@@ -1,6 +1,29 @@
 # 1: Baremetal HelloWorld
 
-[toc]
+  * [Objectives](#objectives)
+  * [Roadmap](#roadmap)
+  * [Terms](#terms)
+  * [Project structure](#project-structure)
+    * [Makefile walkthrough](#makefile-walkthrough)
+    * [Build targets &amp; rules](#build-targets--rules)
+    * [Bake the kernel binaries](#bake-the-kernel-binaries)
+    * [The linker script](#the-linker-script)
+  * [Kernel startup](#kernel-startup)
+    * [Booting the kernel](#booting-the-kernel)
+    * [Kernel memory layout](#kernel-memory-layout)
+    * [The kernel\_main function](#the-kernel_main-function)
+  * [A bit about the Rpi3 hardware](#a-bit-about-the-rpi3-hardware)
+    * [Memory\-mapped IO](#memory-mapped-io)
+    * [UART](#uart)
+    * [GPIO](#gpio)
+  * [Walkthrough: the UART code](#walkthrough-the-uart-code)
+    * [Init: GPIO alternative function selection](#init-gpio-alternative-function-selection)
+    * [Init: Mini UART](#init-mini-uart)
+    * [Sending data over UART](#sending-data-over-uart)
+  * [Take the kernel for a spin](#take-the-kernel-for-a-spin)
+    * [Rpi3](#rpi3)
+    * [QEMU](#qemu)
+
 ## Objectives
 
 ![](figures/helloworld.png)
