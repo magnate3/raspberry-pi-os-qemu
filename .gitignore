@@ -1,3 +1,6 @@
+site/*
+todel/*
+
 backup/*
 src/*/build
 **/*.o
@@ -5,6 +8,9 @@ src/*/build
 **/*.swp
 **/*.img
 **/*.elf
+**/*.list
+**/*.cmd
+
 
 *.pdf
 
