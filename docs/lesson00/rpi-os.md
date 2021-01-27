@@ -31,7 +31,7 @@ baremetal; kernel; kernel binary; kernel image
 
 This is where you develop kernel code. 
 
-We have configured departmental server(s) for you to use. See [here](../../ssh-proxy.md). You can develop on your local machine and test on the servers. 
+We have configured departmental server(s) for you to use. See [here](../ssh-proxy.md). You can develop on your local machine and test on the servers. 
 
 Alternatively, you may do everything on your local machine, here are suggestions: 
 
@@ -222,7 +222,7 @@ My serial number is: 0000000000000000
 ```
 >  Note: the test program runs an infinite loop which will cause high CPU usage on your host machine. Kill the test program timely. 
 
-On Linux (terminal) 
+On Linux:
 ![](test-qemu.gif)
 
 On Windows (WSL) 

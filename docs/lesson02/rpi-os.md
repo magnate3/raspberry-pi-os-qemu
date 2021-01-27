@@ -32,7 +32,7 @@ Students will:
 
 ARMv8 defines 4 exception levels. You can think about an exception level as a processor execution mode in which only a subset of all operations and registers is available. The least privileged exception level, i.e. lowest level, is level 0. When processor operates at this level, it mostly uses only general purpose registers (X0 - X30) and stack pointer register (SP). EL0 also allows using `STR` and `LDR` commands to load and store data to and from memory and a few other instructions commonly used by a user program.
 
-<img src="figures\els.png" alt="image-20200724105904952" style="zoom: 67%;" />
+![](figures\els.png)
 
 An OS kernel deals with exception levels because it needs to implement *isolation*. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
 

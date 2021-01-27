@@ -48,6 +48,8 @@ nav:
   #- Device:
    # - Hikey: devices/hikey.md
     #- Odroid: devices/odroid.md
-  - gdb: gdb.md
-  - cheatsheet: cheatsheet.md
-  - ssh: ssh-proxy.md
+  - /qemu: qemu.md    
+  - /gdb: gdb.md
+  - /aarch64: cheatsheet.md
+  - /ssh: ssh-proxy.md
+  - /dump: dump.md

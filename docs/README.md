@@ -40,27 +40,21 @@ Experimenting with these features is difficult with commodity kernels due to the
 <!---- to complete --->
 
 ## Experiments
-0. **[Sharpen your tools!](docs/lesson00/rpi-os.md)** (p1 exp0) 
+0. **[Sharpen your tools!](lesson00/rpi-os.md)** (p1 exp0) 
 1. **Helloworld from baremetal** (p1 exp1) 
-      * [Power on + UART bring up](docs/lesson01/rpi-os.md)
-      * [Simplifying dev workflow](docs/lesson01/workflow.md)
-      <!---- * [Exp](docs/lesson01/exercises.md) ----->
+      * [Power on + UART bring up](lesson01/rpi-os.md)
+      * [Simplifying dev workflow](lesson01/workflow.md)
 2. **Exception elevated** (p1 exp2) 
-      * [CPU initialization, exception levels](docs/lesson02/rpi-os.md)
-      <!---- * [Exp](docs/lesson02/exercises.md) ----->
+      * [CPU initialization, exception levels](lesson02/rpi-os.md)
 3. **Heartbeats on** (p1 exp3) 
-      * [Interrupt handling](docs/lesson03/rpi-os.md)
-      <!----* [Exp](docs/lesson03/exercises.md) ----->
+      * [Interrupt handling](lesson03/rpi-os.md)
 4. **Process scheduler** (p1 exp4) 
-      * [A. Cooperative](docs/lesson04a/rpi-os.md) 
-      * [B. Preemptive](docs/lesson04b/rpi-os.md) 
-      <!---- * [Exercises](docs/lesson04a/exercises.md) ----->
+      * [A. Cooperative](lesson04a/rpi-os.md) 
+      * [B. Preemptive](lesson04b/rpi-os.md) 
 5. **A world of two lands** (p1 exp5) 
-      * [User processes and system calls](docs/lesson05/rpi-os.md) 
-      <!---- * [Exercises](docs/lesson05/exercises.md) ----->
+      * [User processes and system calls](lesson05/rpi-os.md) 
 6. **Into virtual** (p1 exp6) 
-      * [Virtual memory management](docs/lesson06/rpi-os.md) 
-      <!---- * [Exercises](docs/lesson06/exercises.md) ----->
+      * [Virtual memory management](lesson06/rpi-os.md) 
 
 ## Assignment weights
 

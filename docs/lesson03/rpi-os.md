@@ -372,13 +372,13 @@ void handle_timer_irq( void )
 
 Here we first update compare register so that that next interrupt will be generated after the same time interval. Next, we acknowledge the interrupt by writing 1 to the `TIMER_CS` register. In the documentation `TIMER_CS` is called "Timer Control/Status" register. Bits [0:3] of this register can be used to acknowledge interrupts coming from one of the 4 available interrupt lines.
 
-## Hacking tips-- observe interrupts with QEMU**
+## Hacking tips -- observe interrupts with QEMU
 
 ```
-qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D test.log 
+qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img \
+-serial null -serial stdio \
+-d int -D test.log 
 ```
-
-Explanation: -d int ---> enable interrupt dedug       -D test.log  ----> put debug msg to a file test.log
 
 Sample log from executing this project:
 

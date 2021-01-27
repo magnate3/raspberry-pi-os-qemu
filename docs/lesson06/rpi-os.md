@@ -127,18 +127,19 @@ An item in a page table is called "descriptor". A description has a special form
 
 * **Bit 0** This bit must be set to 1 for all valid descriptors. If MMU encounter non-valid descriptor during translation process a synchronous exception is generated. If this invalid bit was set by kernel on purpose, the kernel shall handle this exception, allocate a new page, and prepare a correct descriptor (We will look in details on how this works a little bit later)
 * **Bit 1** This bit indicates whether the current descriptor points to a next page table in the hierarchy (we call such descriptor a "**table descriptor**") or it points instead to a physical page or a section (such descriptors are called "**block descriptors**").
-* **Bits [11:2]** Those bits are ignored for table descriptors. For block descriptors they contain some attributes that control, for example, whether the mapped page is cachable, executable, etc.
+* **Bits [11:2]** Those bits are ignored for table descriptors. For block descriptors they contain some attributes that control, for example, whether the mapped page is readable/writeable (AP), executable (XN), etc. Here also comes the MemAttr bits. See below. 
 * **Bits [47:12]**. This is the place where the address that a descriptor points to is stored. As I mentioned previously, only bits [47:12] of the address need to be stored, because all other bits are always 0.
 * **Bits [63:48]** Another set of attributes.
 
+See [Arm's official page](https://armv8-ref.codingbelief.com/en/chapter_d4/d43_3_memory_attribute_fields_in_the_vmsav8-64_translation_table_formats_descriptors.html#). 
 
 ### Configuring page attributes
 
-As I mentioned in the previous section, each block descriptor contains a set of attributes that controls various virtual page parameters. However, the attributes that are most important for our discussion are NOT configured directly in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days when ARM hardware was way simpler were gone)
+As I mentioned in the previous section, each block descriptor contains a set of attributes (called MemAttr, bits[5:2]) that controls various virtual page parameters, notably cacheability or shareability. However, the attributes that are most important for our discussion are NOT configured directly in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days when ARM hardware was way simpler were gone)
 
 **Memory attribute indirection** 
 
-ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/arm/mmu.h#L11)  is the code that prepares values for the `mair` register.
+ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
 
 ```
 /*
@@ -492,7 +493,7 @@ As user programs will be linked as part the kernel binary, the linker will place
 
 We rely on an assumption: our user programs are simple enough; they always address memory with register-relative offsets but not absolute address. You can verify this by disassembly. However, if our programs, e.g. call functions via pointers, the entailed long jmp will target absolute virtual address inside kernel and will trigger exception. 
 
-This assumption can't go a long way. The right solution would be link user programs and kernel separately. 
+This assumption can't go a long way. The right solution would be linking user programs and kernel separately. 
 
 Right now there are 2 files that are compiled in the user region.
 

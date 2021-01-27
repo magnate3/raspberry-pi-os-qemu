@@ -5,26 +5,44 @@
 ```
 # assuming the qemu source tree has been built, and it is under ./qemu
 export PATH="$(pwd)/qemu/aarch64-softmmu:${PATH}"
+
+# (optional: grab a sample kernel binary for testing)
+wget https://github.com/fxlin/p1-kernel/releases/download/exp1/kernel8.img
 ```
 
 ## Launch the kernel 
+
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio
+
+# if you want to suppress graphics ... 
+qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -nographic
 ```
 Explanation: 
 * -M machine type
-* Two "-serial" options correspond to the two UARTs of Rpi3 as emulated by QEMU. Our kernel writes message to the 2nd one. So we tell QEMU to redirect the 2nd UART to stdio. 
+* Two "-serial" options correspond to the two UARTs of Rpi3 as emulated by QEMU. **Note:** Our kernel writes message to the 2nd one. So we tell QEMU to redirect the 2nd UART to stdio. 
 
 ## Launch the kernel in debug mode
 
 ```
+# will wait for gdb to connect at local tcp 1234
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -s -S
+
+# will wait for gdb to connect at local tcp 5678
+qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -gdb tcp::5678 -S
 ```
+Explanation: -S not starting the guest until you tell it to from gdb. 
+-s listening for an incoming connection from gdb on TCP port 1234
+
+The second form is useful in that if multiple students attempt to listen on tcp port 1234 on the same machine, all but one will fail. 
 
 ## Launch the kernel with monitor 
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -monitor stdio
+# multiplex both board serial and monitor output on stdio
+qemu-system-aarch64 -machine raspi3 -serial null -serial mon:stdio -kernel kernel8.img
 ```
+More on [the monitor mode](https://en.wikibooks.org/wiki/QEMU/Monitor). 
 
 ## Run the kernel with tracing 
 ```
@@ -72,4 +90,6 @@ interval is set to: 67108864
 ## Reference
 
 https://wiki.osdev.org/QEMU
+
+All QEMU options: https://github.com/qemu/qemu/blob/master/qemu-options.hx
 
