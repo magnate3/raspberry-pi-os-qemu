@@ -1,5 +1,7 @@
 # A tiny, modern kernel for Raspberry Pi 3 
 
+https://fxlin.github.io/p1-kernel/
+
 A tiny kernel *incrementally built* for OS education. 
 
 Start with minimal, baremetal code. Then add kernel features in small doses. 
