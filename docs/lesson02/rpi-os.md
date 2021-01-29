@@ -1,20 +1,6 @@
 # 2: Processor initialization 
 
-  * [Objectives](#objectives)
-  * [Background: Exception levels (EL)](#background-exception-levels-el)
-    * [Switching ELs](#switching-els)
-  * [Enhanced debugging](#enhanced-debugging)
-    * [Bring up printf()](#bring-up-printf)
-    * [QEMU \+ GDB debugging](#qemu--gdb-debugging)
-  * [Code Walkthrough](#code-walkthrough)
-    * [Finding out the current EL](#finding-out-the-current-el)
-    * [Switching to EL1](#switching-to-el1)
-      * [SCTLR\_EL1, System Control Register (EL1)](#sctlr_el1-system-control-register-el1)
-      * [HCR\_EL2, Hypervisor Configuration (EL2)](#hcr_el2-hypervisor-configuration-el2)
-      * [SCR\_EL3, Secure Configuration (EL3)](#scr_el3-secure-configuration-el3)
-      * [SPSR\_EL3, Saved Program Status (EL3)](#spsr_el3-saved-program-status-el3)
-      * [ELR\_EL3, Exception Link (EL3)](#elr_el3-exception-link-el3)
-  * [Conclusion](#conclusion)
+![](figures/run.png)
 
 ## Objectives
 
@@ -30,47 +16,47 @@ Students will:
 
 ## Background: Exception levels (EL)
 
-ARMv8 defines 4 exception levels. You can think about an exception level as a processor execution mode in which only a subset of all operations and registers is available. The least privileged exception level, i.e. lowest level, is level 0. When processor operates at this level, it mostly uses only general purpose registers (X0 - X30) and stack pointer register (SP). EL0 also allows using `STR` and `LDR` commands to load and store data to and from memory and a few other instructions commonly used by a user program.
+ARMv8 defines 4 exception levels. An exception level is a processor execution mode in which only a subset of all operations and registers is available. 
+
+The least privileged exception level, i.e. lowest level, is level 0. When processor operates at this level, it mostly uses only general purpose registers (X0 - X30) and stack pointer register (SP). EL0 also allows using `STR` and `LDR` instructions to load and store data to and from memory, among other instructions commonly used by a user program.
 
 ![](figures\els.png)
 
-An OS kernel deals with exception levels because it needs to implement *isolation*. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
+Why exception levels? Because an OS needs to implement *isolation*. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
 
 The kernel itself usually works at EL1. While running at this exception level CPU gets access to the registers that allows configuring MMU as well as some system registers. 
 
-**About EL2/3**: this lab is NOT going to use EL 2 or EL 3, but I just want to briefly describe them so you can get an idea why they are needed. 
+**About EL2/3**: we will not deal with EL 2 or EL 3 until project 3 (secure hardware enclaves). Let's briefly describe them.  
 
-EL2 is used in a scenario when we are using a hypervisor. In this case hypervisor runs at EL2 and guest OSes run at EL1. This allows the hypervisor to isolate guest OSes in a similar way how OS isolates user processes.
+*EL2 is for virtual machines.* In this case the virtual machine hypervisor runs at EL2 and guest OSes run at EL1. This allows the hypervisor to isolate guest OSes in a similar way how OS isolates user processes.
 
-EL3 pertains to Arm TrustZone. It is used for transitions from ARM "Secure World" to "Insecure world". This abstraction exist to provide full hardware isolation between the software running in two different "worlds". Application from an "Insecure world" can in no way access or modify information (both instruction and data) that belongs to "secure world", and this restriction is enforced at the hardware level. 
-
-> We will do TrustZone experiments soon!
+*EL3 is for Arm TrustZone*. It is used for transitions from ARM "Secure World" to "Insecure world". This abstraction exist to provide full hardware isolation between the software running in two different "worlds". Application from an "Insecure world" can in no way access or modify information (both instruction and data) that belongs to "secure world", and this restriction is enforced at the hardware level. 
 
 ### Switching ELs
 
-In Arm architecture, there is no way a program can raise its own exception level without involving software that already runs on a higher level. This makes a perfect sense: otherwise, any program would be able to escape its assigned EL and makes unauthorized access to memory or registers. 
+In Arm architecture, there is no way a program can raise its own exception level without invoking code that is allowed to run on a higher level. This makes a perfect sense: otherwise, any program would be able to escape its assigned EL and makes unauthorized access to memory or registers. 
 
-Current EL can be changed only if an exception is generated. Common causes of exceptions include (not limited to): 
+Current EL can be changed only if an **exception** is generated. Common causes of exceptions include:  
 
 * software executes some illegal instruction (for example, tries to access memory location at a nonexisting address; 
 * software tries to divide an integer by 0; 
 * software executes special instructions (e.g. `svc`) to request exceptions. 
 
-In Arm's lingo, IO-generated interrupts are also handled as a special type of exceptions. 
+How about interrupts generated by IO? In Arm's lingo, interrupts are also handled as a special type of exceptions. 
 
-Whenever an exception is generated the following sequence of steps takes place (In the description I am assuming that the exception is handled at EL `n`, were `n` could be 1, 2 or 3).
+Whenever an exception is generated the following sequence of steps takes place (In the description, the exception is *handled* at EL `n`, were `n` could be 1, 2 or 3).
 
-1. Address of the current instruction is saved in the `ELR_ELn`  register. (It is called `Exception link register`)
-1. Current processor state is stored in `SPSR_ELn` register (`Saved Program Status Register`)
+1. Address of the current instruction is saved in `ELR_ELn` (exception link register)
+1. Current processor state is stored in `SPSR_ELn` (Saved Program Status Register)
    * NB: As some of you may know, other CPU hardware may automatically push registers on stack prior to exception handling. Armv8 does NOT do that. 
-1. An exception handler is executed and does whatever job it needs to do.
-1. Exception handler calls `eret` instruction. This instruction restores processor state from `SPSR_ELn` and resumes execution starting from the address, stored in the `ELR_ELn`  register.
+1. The CPU executes an exception handler at ELn.
+1. The exception handler calls `eret` instruction. This instruction restores processor state from `SPSR_ELn` and resumes execution starting from the address, stored in the `ELR_ELn`  register.
 
 There are more details, e.g. the exception handler software also needs to store the state of all general purpose registers and restore it back afterwards, as we will discuss this process in details in the upcoming experiment. For now, we need just to understand the process in general and remember the meaning of the `ELR_ELm` and `SPSR_ELn` registers.
 
 An important thing to know is that exception handler is not obliged to return to the same instruction where the exception originates. Both `ELR_ELm` and `SPSR_ELn` are writable and the exception handler can modify them in order to specify the instructions to execute right after the EL switch. We are going to use this technique to our advantage when we try to switch from EL3 to EL1 in our code.
 
-## Enhanced debugging
+## Aside: enhanced debugging
 
 ### Bring up printf()
 
@@ -112,7 +98,7 @@ Here we use `mrs` instruction to read the value from `CurrentEL` system register
 
 ### Switching to EL1
 
-EL1 is intended for OS kernels. Strictly speaking, our kernel is not obliged to switch to EL1 when it boots up, but EL1 is a natural choice for us because this level has just the right set of privileges to implement all common OS tasks. It also will be an interesting exercise to see how switching exceptions levels works in action. Let's take a look at the [source code that does this](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson02/src/boot.S#L17).
+EL1 is intended for OS kernels. Strictly speaking, our kernel is not obliged to switch to EL1 when it boots up, but EL1 is a natural choice for us because this level has just the right set of privileges to implement all common OS tasks. It also will be an interesting exercise to see how switching exceptions levels works in action. Let's take a look at the source code that does this (boot.S). 
 
 ```
 master:
@@ -226,6 +212,14 @@ Usually `spsr_el3` is saved automatically by CPU hardware, when an exception is 
 ## Conclusion
 
 That is pretty much it: when we enter `el1_entry` function the execution should be already at EL1 mode. 
+
+Qemu.log: 
+
+```
+Exception return from AArch64 EL2 to AArch64 EL1 PC 0x80038
+```
+
+The address 0x80038 should point to el1_entry. Check it out using addr2line. 
 
 Our subsequent experiments will switch between EL1 (kernel) and EL0 (user) frequently. 
 

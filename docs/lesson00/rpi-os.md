@@ -36,7 +36,7 @@ We have configured departmental server(s) for you to use. See [here](../ssh-prox
 Alternatively, you may do everything on your local machine, here are suggestions: 
 
 - Linux. Recommended: Ubuntu 20.04 LTS. 
-- Windows: WSL or WSL2. See [instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10#:~:text=To%20check%20your%20version%20and,command%20in%20Windows%20Command%20Prompt).
+- Windows: WSL or WSL2. See [instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10#:~:text=To%20check%20your%20version%20and,command%20in%20Windows%20Command%20Prompt). My Windows machine runs WSL2 with Ubuntu18.04. 
 - OS X: (likely HomeBrew is needed. Not tested)
 
 ### Toolchain
@@ -159,7 +159,7 @@ Strictly speaking, Docker is not a required dependency. It is just convenient to
 
 ### Approach 2: QEMU 
 
-You are required to compile QEMU from source. 
+#### Compile QEMU from source 
 
 Need QEMU >v2.12. Newer version is likely fine. The following shows the default QEMU coming with Ubuntu 18.04 is too old.  For instance: 
 
@@ -203,6 +203,8 @@ $ qemu-system-aarch64 -M help|grep rasp
 raspi2               Raspberry Pi 2
 raspi3               Raspberry Pi 3
 ```
+
+#### Test the compilation
 
 Test QEMU with Rpi3 baremetal code (NOTE: this repo is for validating your toolchain & QEMU build; it is NOT our course project)
 

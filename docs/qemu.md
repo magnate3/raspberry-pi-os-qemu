@@ -50,6 +50,38 @@ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -
 ```
 Explanation: -d int ---> enable interrupt dedug       -D test.log  ----> put debug msg to a file "qemu.log"
 
+Sample log from executing  p1exp3:
+
+```
+Exception return from AArch64 EL2 to AArch64 EL1 PC 0x80038
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+Taking exception 5 [IRQ]
+...from EL1 to EL1
+...with ESR 0x0/0x0
+...with ELR 0x8095c
+...to EL1 PC 0x81a80 PSTATE 0x3c5
+Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
+```
+
+Explanation: ESR - exception syndrome register, encoding the cause of the exception. ELR - exception link register, containing the return address of the exception handler. PSTATE - CPU flags when the exception is taken 
+
 ## Putting everything in one file (env-qemu.sh)
 
 ```

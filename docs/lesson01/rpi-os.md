@@ -146,7 +146,7 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 
 The next two lines are a little bit tricky. If you take a look at how we defined our compilation targets for both C and assembler source files, you will notice that we used the `-MMD` parameter. This parameter instructs the `gcc` compiler to create a dependency file for each generated object file. A dependency file defines all of the dependencies for a particular source file. These dependencies usually contain a list of all included headers. We need to include all of the generated dependency files so that make knows what exactly to recompile in case a header changes. 
 
-### Bake the kernel binaries
+### Bake the kernel binaries :cookie:
 
 ```
 $(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o kernel8.elf  $(OBJ_FILES)
@@ -203,7 +203,7 @@ After booting up, our kernel initializes the `.bss` section to 0; that's why we 
 
 ### Booting the kernel
 
-boot.S contains the kernel startup code:
+boot.S contains the kernel startup code (VSCode: Ctrl-p then type boot.S):
 
 ```
 #include "mm.h"
@@ -288,7 +288,7 @@ For official documentation, [here](http://infocenter.arm.com/help/index.jsp?topi
 
 ### The `kernel_main` function
 
-We have seen that the boot code eventually passes control to the `kernel_main` function. Let's take a look at it:
+We have seen that the boot code eventually passes control to the `kernel_main` function. (VSCode: Ctrl-t then type "kernel_main")
 ```
 #include "mini_uart.h"
 
@@ -306,7 +306,9 @@ void kernel_main(void)
 This function is one of the simplest in the kernel. It works with the `Mini UART` device to print to screen and read user input. The kernel just prints `Hello, world!` and then enters an infinite loop that reads characters from the user and sends them back to the screen.
 
 ## A bit about the Rpi3 hardware
-The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
+The Rpi3 board is based on the BCM2837 SoC by Broadcom. The SoC manual is [here](https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf). The SoC is not friendly for OS hackers: Broadcom poorly documents it and the hardware has many quirks. 
+
+Despite so, the community figured out most of the SoC details over years because Rpi3's popularity. It's not our goal to dive in the SoC. Rather, our philosophy is to deal BCM2837-specific details as few as possible -- just enough to get our kernel working. We will spend more efforts on explaining generic hardware such as ARM64 cores, generic timers, irq controllers, etc. 
 
 > Rpi4 seems more friendly to kernel hackers. 
 
@@ -564,11 +566,9 @@ This function just iterates over all characters in a string and sends them one b
 
 ## Take the kernel for a spin
 
-<!-- 1. Execute `./build.sh` or `./build.bat` from [src/lesson01](https://github.com/s-matyukevich/raspberry-pi-os/tree/master/src/lesson01) in order to build the kernel. -->
+### Rpi3
 
 Run `make` to build the kernel. 
-
-### Rpi3
 
 The Raspberry Pi startup sequence is the following (simplified):
 
@@ -621,6 +621,8 @@ Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocument
 **Setup**
 
 Follow the instructions in [Prerequisites](../lesson00/rpi-os.md).
+
+Type `make -f Makefile.qemu` . 
 
 **Run**
 

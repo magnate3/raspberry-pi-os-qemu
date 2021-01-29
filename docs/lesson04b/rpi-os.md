@@ -34,7 +34,7 @@ void kernel_main(void) {
 }
 ```
 
-Tasks no longer need to call schedule() voluntarily. 
+With that, tasks no longer need to call schedule() voluntarily. 
 
 ```
 void process(char *array)
@@ -130,7 +130,7 @@ Our implementation choice is on the current task's kernel stack (not in `task_st
 
 **A timer interrupt occurred**
 
-* [kernel_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L17) macro saves all general purpose registers + `elr_el1` and `spsr_el1` to the bottom of task 1 stack ("saved regs" in the figure below).
+* [kernel_entry](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L17) macro saves all general purpose registers & `elr_el1` and `spsr_el1` to the bottom of task 1 stack ("saved regs" in the figure below).
 * The kernel now executes in the irq context. It continues to grow the *current* stack which belongs to task 1. The growth is below the "saved regs" region and is marked as "irq frame" on the figure (i.e. the stack frame created by the execution in the irq context). 
 * The kernel proceeds to `schedule` and picks task 2. 
 
@@ -190,7 +190,7 @@ Finally, `kernel_exit` executes `eret` instruction which uses `elr_el1` register
 
 ----------------------------
 
-#### An alternative design
+#### Aside: An alternative design
 
 * When an interrupt happens, the CPU saves irq stack frame automatically on the stack of the current task, e.g. A. This is the same as the design above. 
 
@@ -333,11 +333,3 @@ Note: our kernel does not (yet) have the mechanism for tasks to wait for interru
 ## Conclusion
 
 We are done with scheduling, but right now our kernel can manage only kernel threads: they are executed at EL1 and can directly access any kernel functions or data. In the next 2 lessons we are going fix this and introduce system calls and virtual memory.
-
-**Previous Page**
-
-3.5 [Interrupt handling: Exercises](../../docs/lesson03/exercises.md)
-
-**Next Page**
-
-4.2 [Process scheduler: Scheduler basic structures](../../docs/lesson04/linux/basic_structures.md)

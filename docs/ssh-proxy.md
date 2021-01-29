@@ -1,4 +1,4 @@
-# Access the CS servers 
+# Accessing the CS servers 
 
   * [Terminal over SSH](#terminal-over-ssh)
     * [1\. Use key\-based authentication in lieu of password](#1-use-key-based-authentication-in-lieu-of-password)
@@ -121,9 +121,19 @@ An official tutorial is [here](https://code.visualstudio.com/docs/remote/ssh).
 
 tl;dr: VSCode will connect to the CS server (Linux) using SSH under the hood. To do so you install the "Remote development" [package](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) which will install the "Remote.SSH" extension for VSCode. 
 
+![](vscode-remove-ssh.png)
+
+> *Screenshot from Peiyi Yang (@py5yy). Her VSCode color scheme is a different than mine.* 
+
 ### Windows caveat 1: ssh keys
 
-The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`), which different from the ssh client that you run in WSL. The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
+The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`), which different from the ssh client that you run in WSL. The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. 
+
+![](images/vscode-ssh-config.png)
+
+>  *Screenshot from Peiyi Yang (@py5yy). Her VSCode color scheme is a different than mine.* 
+
+If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
 
 | ![](images/powershell.png) | ![](images/powershell-sshkeygen.png) | ![](images/wslroot.png) |
 | -------------------------- | ------------------------------------ | ----------------------- |
@@ -147,7 +157,7 @@ Make sure you have the Remote.SSH extension installed. Click "Remote Explorer" o
 
 ### Launch a terminal
 
-After connection, click "remote" on the left bar to bring up a remote terminal, in which you can execute commands to build projects, etc. Make sure to click the "+" sign to create a new terminal. 
+After connection, click "remote" on the left bar to bring up a remote terminal, in which you can execute commands to build projects, etc. Make sure to click the "+" sign to create a new shell terminal. 
 
 ![image-20210124192109456](images/vscode-remote-terminal.png)
 

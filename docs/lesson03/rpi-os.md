@@ -19,9 +19,11 @@ You will learn and experience with:
 
 ## Background: interrupts & exceptions in ARM64
 
-By their canonical definitions, interrupts are asynchronous while exceptions are synchronous. However in ARM64 lingo, exception is broadly defined; interrupts are a special kind of exceptions. x86 has its own lingo, calling exceptions as "traps". In this article, we use ARM's broad definition of exceptions unless stated otherwise. 
+By their canonical definitions, interrupts are asynchronous while exceptions are synchronous. 
 
-<!---When we refer to ARM's broad definition of "exceptions" we will be explicit. In general discussion of OS designs, however, we will stick to our differentiation between interrupts vs exceptions. --->
+However in ARM64 lingo, exception is broadly defined; interrupts are a special kind of exceptions. x86 has its own lingo, calling exceptions as "traps". 
+
+In this article, we use ARM's broad definition of exceptions unless stated otherwise. 
 
 ### Exception types
 
@@ -34,9 +36,9 @@ ARM64 defines 4 types of exceptions. **We will focus the former two**.
 
 ### Exception vectors
 
-<!---Each exception type needs its own handler. Also, separate handlers should be defined for each different execution state, in which exception is generated. There are 4 execution states that are interesting from the exception handling standpoint. If we are working at EL1 those states can be defined as follows:-->
+An exception vector is a piece of code the CPU will execute when a specific exception happens. "*These would normally be branch instructions that direct the core to the full exception handler.*" (the ARM64 manual). 
 
-An exception vector is a piece of code the CPU will execute when a specific exception happens. "*These would normally be branch instructions that direct the core to the full exception handler.*" (the ARM64 manual). In some other architectures an exception vector could be an address to jump to. Note the subtle difference. 
+In some other architectures an exception vector could be an address to jump to. Note the subtle difference. 
 
 Each exception level (EL) has its own vector table. Here we focus on EL1 where the kernel executes. The kernel must provide exception handlers to be executed at EL1 in order to handle exceptions from EL0 (the user programs) or EL1 (its own execution). These should be handlers for *each* exception type above (SError, fiq, irq, and sync) and for *each* of the four execution states of the CPU:
 
@@ -51,7 +53,7 @@ In total, for EL1 the kernel needs to **define 16 exception handlers** (4 types 
 
 ### ARM64 vector table
 
-**Each exception vector** (or handler) is a continuous sequence of instructions responsible for handling a particular exception. Each exception vector can occupy`0x80` bytes maximum. This is not much, but nobody prevents us from jumping to some other memory location from an exception vector. 
+**Each exception vector** (or handler) is a continuous sequence of instructions responsible for handling a particular exception. Each exception vector can occupy`0x80` bytes maximum (thus `.align 7` in the asm code). This is not much, but nobody prevents us from jumping to some other memory location from an exception vector. 
 
 **The vector table** is an array of exception vectors. Note each EL has its own table as described above. 
 
@@ -59,9 +61,9 @@ Here is a short, good [reference](https://developer.arm.com/docs/100933/0100/aar
 
 ## Code Walkthrough 
 
-### Exception vectors, tables, etc.
+### Exception vectors, tables, etc. (entry.S)
 
-Everything related to exception handling is defined in [entry.S](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/entry.S). The code mimics what the ARM64 Linux kernel does. 
+The code mimics what the ARM64 Linux kernel does. 
 
 Why named "entry"? Because in a full-fledged kernel, exception/irq handlers are where user programs enter the kernel for execution. Although this experiment is not building such a kernel, we follow the naming convention. 
 
@@ -76,15 +78,30 @@ The first macro [ventry](https://github.com/s-matyukevich/raspberry-pi-os/blob/m
 
 As suggested above: for code clarity, we are not going to handle exceptions right inside the exception vector. Instead, we make each vector a branch instruction (`b \label`) that jumps to a label provided for the macro as `label` argument.
 
-<!-- Instead, we jump to a label that is provided for the macro as `label` argument. -->
-
 We need `.align 7` because all exception vectors should be spaced at `0x80` bytes (2^7) one from another. A useful assembly trick. 
 
-The vector table is defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/entry.S#L64) and it consists of 16 `ventry` definitions. 
+The vector table consists of 16 `ventry` definitions:
 
-#### Making CPU aware of the vector table
+```
+.align	11
+.globl vectors 
+vectors:
+	ventry	sync_invalid_el1t			// Synchronous EL1t
+	ventry	irq_invalid_el1t			// IRQ EL1t
+	ventry	fiq_invalid_el1t			// FIQ EL1t
+	ventry	error_invalid_el1t			// Error EL1t
+...	
+```
 
-Ok, now we have prepared the vector table, but the processor doesn't know where it is located and therefore can't use it. In order for the exception handling to work, we must set `vbar_el1` (Vector Base Address Register) to the vector table address. This is done [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/irq.S#L2).
+After compilation, the vector table will look like: 
+
+![image-20210127174836499](images/vector-disasm.png)
+
+*The starting part of the vector table, as dumped by the disassembler odaweb.*
+
+#### Making CPU aware of the vector table (irq.S)
+
+Ok, now we have prepared the vector table, but the processor doesn't know where it is located and therefore can't use it. In order for the exception handling to work, we must set `vbar_el1` (Vector Base Address Register) to the vector table address. 
 
 ```
 .globl irq_vector_init
@@ -115,7 +132,7 @@ We name all the handlers that are NOT supposed to be trigged  with a `invalid` p
 
 The first line invokes a macro `kernel_entry` which is the first few instructions the kernel should execute in handling an exception/interrupt (recall the term "entry"). We will discuss it below.
 
-Then we call [show_invalid_entry_message](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/irq.c#L34) and prepare 3 arguments for it. The arguments are passed in 3 registers: x0, x1, and x2. 
+Then we call show_invalid_entry_message() and prepare 3 arguments for it. The arguments are passed in 3 registers: x0, x1, and x2. 
 
 * x0: the exception type. The value comes from the argument to this macro. It can take one of [these](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/include/entry.h#L6) values defined by our kernel code. It tells us exactly which exception handler has been executed.
 * x1: information about what causes the exception. The value comes from `esr_el1` register.  `ESR` stands for Exception Syndrome Register. EL1 implies "when an exception is taken to EL1", i.e. when the exception is handled at EL1. Note: in this experiment our kernel runs at EL1 and when an interrupt happens it is handled at EL1. Read the [ref](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/esr_el1) again. 
@@ -138,16 +155,16 @@ el1_irq:
 
 Back to `kernel_entry`. This is the first thing to do in handling an exception: saving the processor state, notably registers x0 - x30, to the stack. To do so, it first subtracts from `sp` the size of total stored registers (#S_FRAME_SIZE) and then fills the stack space. 
 
-According to `kernel_entry`, there is  [kernel_exit](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/entry.S#L37) to be called as the last thing of an exception handler. `kernel_exit` restores the CPU state by copying back the values of x0 - x30. The order exactly mirrors that of `kernel_entry` otherwise we will see wrong register values. Finally `kernel_exit` executes `eret`, which returns to the normal execution. 
+According to `kernel_entry`, there is `kernel_exit` to be called as the last thing of an exception handler. `kernel_exit` restores the CPU state by copying back the values of x0 - x30. The order exactly mirrors that of `kernel_entry` otherwise we will see wrong register values. Finally `kernel_exit` executes `eret`, which returns to the normal execution. 
 
 
 Note: general purpose registers are not the only thing to be saved for `kernel_entry/exit`. Doing so is enough for our simple kernel for now. More on them in subsequent experiments. 
 
 ### Working with interrupts
 
-<!--- need an overall figure: how irq connected -->
+#### ![image-20210127215831536](images/irq-routing.png)
 
-#### Configuring the interrupt controller 
+#### Configuring the Interrupt controller 
 
 Interrupts are generated by IO devices, go through the irq controller, and eventually arrive the CPU. The CPU can program the irq controller to enable/disable specific interrupt sources. By disabling an irq source, the CPU will not lose any irq from that device, but just defer receiving irq until the CPU re-enables the irq source. The CPU can also read from the irq controller which IO devices have pending interrupts, meaning that the IO devices need attention. 
 
@@ -156,7 +173,7 @@ Because of the hardware quirks (e.g. many irqs are routed from GPU to CPU), the 
 
 > Be aware of their weird naming: these irq groups are called "Basic" (irqs routed to the ARM CPU), "1", and "2" (irqs routed from GPU to CPU). For example, `IRQ basic pending`, `IRQ pending 1`, `IRQ pending 2`.  The SoC manual has more dirty details. 
 
-We are only interested in timer interrupts. The SoC manual, page 113 states that irq #1 and #3 are from the system timer. These irq sources belong to the irq group 1, which can be enabled using [ENABLE_IRQS_1](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/include/peripherals/irq.h#L10). So here is the [function](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/irq.c#L29) that enables system timer IRQ at #1.
+We are only interested in timer interrupts. The SoC manual, page 113 states that irq #1 and #3 are from the system timer. These irq sources belong to the irq group 1, which can be enabled using [ENABLE_IRQS_1](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/include/peripherals/irq.h#L10). So `enable_interrupt_controller()` enables system timer IRQ at #1: 
 
 <!--- According to the documentation, interrupts are divided into 2 banks. The first bank consists of interrupts `0 - 31`, each of these interrupts can be enabled or disabled by setting different bits of `ENABLE_IRQS_1` register. There is also a corresponding register for the last 32 interrupts - `ENABLE_IRQS_2` and a register that controls some common interrupts together with ARM local interrupts - `ENABLE_BASIC_IRQS` (We will talk about ARM local interrupts in the next chapter of this lesson). --->
 
@@ -179,7 +196,7 @@ Upon entry to ANY exception/interrupt, the processor automatically masks all int
 
 Note: it is perfectly legal to have nested interrupts, i.e. handling another interrupt in the middle of an interrupt handler. Nested interrupts are NOT common: for simple designs, many kernels intentionally keep interrupt handlers very short so they can mask interrupts throughout an interrupt handler without delaying future interrupts too much. However, handling *interrupts* during *exception* handlers is VERY common. Syscalls are executed as exception handlers, during which the kernel must be responsive to interrupts. 
 
-The [following two functions](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson03/src/irq.S#L7-L15) mask and unmask interrupts.
+The following two functions (irq.S) mask and unmask interrupts.
 
 ```
 .globl enable_irq
@@ -193,7 +210,7 @@ disable_irq:
         ret
 ```
 
-ARM processor state (PSTATE) has 4 bits holding mask status for different types of interrupts. 
+Explanation: ARM processor state (PSTATE) has 4 bits holding mask status for different types of interrupts. 
 
 * **D**  Masks debug exceptions. These are a special type of synchronous exceptions. For obvious reasons, it is not possible to mask all synchronous exceptions, but it is convenient to have a separate flag that can mask debug exceptions.
 * **A** Masks `SErrors`. It is called `A` because `SErrors` sometimes are called asynchronous aborts.
@@ -379,38 +396,7 @@ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img \
 -serial null -serial stdio \
 -d int -D test.log 
 ```
-
-Sample log from executing this project:
-
-```
-Exception return from AArch64 EL2 to AArch64 EL1 PC 0x80038
-Taking exception 5 [IRQ]
-...from EL1 to EL1
-...with ESR 0x0/0x0
-...with ELR 0x8095c
-...to EL1 PC 0x81a80 PSTATE 0x3c5
-Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
-Taking exception 5 [IRQ]
-...from EL1 to EL1
-...with ESR 0x0/0x0
-...with ELR 0x8095c
-...to EL1 PC 0x81a80 PSTATE 0x3c5
-Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
-Taking exception 5 [IRQ]
-...from EL1 to EL1
-...with ESR 0x0/0x0
-...with ELR 0x8095c
-...to EL1 PC 0x81a80 PSTATE 0x3c5
-Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
-Taking exception 5 [IRQ]
-...from EL1 to EL1
-...with ESR 0x0/0x0
-...with ELR 0x8095c
-...to EL1 PC 0x81a80 PSTATE 0x3c5
-Exception return from AArch64 EL1 to AArch64 EL1 PC 0x8095c
-```
-
-
+See [the qmeu cheatsheet](../qemu.md) for more. 
 
 ## Conclusion
 

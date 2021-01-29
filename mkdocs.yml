@@ -1,8 +1,8 @@
 site_name: p1-kernel
 
 theme:
-  #name: material
-  name: mkdocs
+  name: material
+  #name: mkdocs
   # custom_dir: material
 
   # 404 page
