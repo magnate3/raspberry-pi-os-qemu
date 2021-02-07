@@ -21,7 +21,7 @@ We will implement:
 
 ## Key data structures
 
- ![](sched/Slide1.png) 
+![](sched/Slide1.png) 
 *An array of pointers to task_structs of tasks* 
 
 ### task_struct
@@ -307,7 +307,7 @@ Where do `x19` and `x20` come from? See code `copy_process` above, which saves `
 
 As a result, `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`. 
 
-> :wrench:Try your self with QEMU: set a breakpoint at ret_from_fork, launch the kernel, and single step into the new process function
+> :wrench:Try your self with QEMU+GDB: set a breakpoint at ret_from_fork, launch the kernel, and single step into the new process function. 
 
 ### Aside: Memory allocation
 

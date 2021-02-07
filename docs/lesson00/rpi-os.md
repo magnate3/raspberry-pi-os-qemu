@@ -1,23 +1,4 @@
-# 0: Sharpen your tools                                
-
-* [About the docs](#about-the-docs)                                                            
-  * [Terms](#terms)                                                                            
-* [Dev environment](#dev-environment)                                                          
-  * [Host OS](#host-os)                                                                        
-  * [Toolchain](#toolchain)                                                                    
-* [Platform Setup](#platform-setup)                                                            
-  * [Approach 1: the real hardware](#approach-1-the-real-hardware)                             
-    * [Check list](#check-list)                                                                
-    * [Prep Raspberry Pi 3 Model B](#prep-raspberry-pi-3-model-b)                              
-    * [Load Raspbian OS to the SD card](#load-raspbian-os-to-the-sd-card)                      
-    * [Plug in the serial cable](#plug-in-the-serial-cable)                                    
-    * [Powering up RPi3](#powering-up-rpi3)                                                    
-    * [An example setup](#an-example-setup)                                                    
-    * [Test your dev workflow](#test-your-dev-workflow)                                        
-      * [Background: what's on SD card?](#background-whats-on-sd-card)                         
-    * [Update config\.txt](#update-configtxt)                                                  
-    * [Build &amp; load sample baremetal program](#build--load-sample-baremetal-program)       
-  * [Approach 2: QEMU](#approach-2-qemu)                                                       
+# 0: Sharpen your tools                 
 
 ## About the docs
 
@@ -62,7 +43,7 @@ This is where you run the kernel code.
 | ------------- | ---- |
 | **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) | **Required:** A USB to TTL serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable). Connection **inside** the dongle: black-GND; green-TXD; white-RXD; red-VCC. |
 
-* **Required:** A micro SD card. The capacity can be humble (e.g. 4GB). The speed does not matter much. The one I used was $6.  [Rpi's official page about uSD]([https://www.raspberrypi.org/documentation/installation/sd-cards.md))
+* **Required:** A micro SD card. The capacity can be humble (e.g. 4GB). The speed does not matter much. The one I used was $6.  [Rpi's official page about uSD](https://www.raspberrypi.org/documentation/installation/sd-cards.md)
 
 * **Required:** SD card reader. To be plugged in your PC for loading kernel to the micro SD card. A cheap one can be $7 on [Amazon](https://www.amazon.com/IOGEAR-MicroSD-Reader-Writer-GFR204SD/dp/B0046TJG1U)
 
@@ -152,11 +133,6 @@ Copy kernel8.img to the SD card. Eject the SD card from PC. Plug the SD to Rpi3.
 
 Viola! You just built your first baremetal program for Rpi3! 
 
-<!--### 4. Docker
-Strictly speaking, Docker is not a required dependency. It is just convenient to use Docker to build source code of the lessons, especially for Mac and Windows users. Each lesson has `build.sh` script (or `build.bat` for windows users) This script uses Docker to build source code of the lesson. Instructions how to install docker for your platform can be found on the [official docker website]
-(https://docs.docker.com/engine/installation/)  If for some reasons you want to avoid using Docker, you can install the [make utility](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) as well as  `aarch64-linux-gnu` toolchain. If you are using Ubuntu you just need to install `gcc-aarch64-linux-gnu` and `build-essential` packages.
--->
-
 ### Approach 2: QEMU 
 
 #### Compile QEMU from source 
@@ -177,12 +153,11 @@ sudo apt install gdb-multiarch build-essential pkg-config
 sudo apt install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
 ```
 
-Grab the source.  We specify QEMU v4.2. 
+Grab the source.  Our QEMU is based on upstream v4.2 **with some aarch64 debugging support.** 
 
 ```
-git clone git://git.qemu.org/qemu.git
+git clone https://github.com/fxlin/qemu-cs4414.git
 cd qemu
-git checkout v4.2.0
 ./configure --target-list=aarch64-softmmu
 make -j`nproc`
 export PATH="$(pwd)/aarch64-softmmu:${PATH}"
@@ -231,4 +206,4 @@ On Windows (WSL)
 
 ![](test-qemu-wsl.gif)
 
-
+Move to [the QEMU cheatsheet](../qemu.md). 

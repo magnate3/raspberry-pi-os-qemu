@@ -1,20 +1,24 @@
 # ARMv8 cheat sheet
 
-## Registers
+## General purpose registers
+
+![image-20210130093920438](image-20210130093920438.png)
 
 * x0 - x30: 64-bit general purpose registers, where: 
-  *  x0-x7  Arguments and  return values.  additional arguments are on the stack
-  * x8: Indirect result. For syscalls, the syscall number is in r8
-  *  x9-x28: caller-saved registers. In general okay to use in your code
-     * x9-x15 are for temporary values. 
-     * x16-x17 for intra-procedure-call temporary  & platform values (avoid)
+  
+  *  x0-x18. callee can corrupt
+     *  x0-x7  Arguments and  return values.  additional arguments are on the stack
+     * x8: Indirect result. For syscalls, the syscall number is in r8
+  *  x19-x29: callee must preserve
+     *  x9-x28: caller-saved registers. In general okay to use in your code
   * x29 (FP): frame pointer, pointing to the base of the current stack frame
   * x30 (LR): link register
-* x31, one of two registers depending on the instruction context:
-  - For instructions dealing with the stack, it is the stack pointer, named rsp
-  - For all other instructions, it is xzr, a "zero" register which returns 0 when read and discards data when written. 
+  
 * SP      Stack pointer                      
+  
 * PC     Program counter                     
+
+  
 
 ## Special purpose registers
 
@@ -118,7 +122,7 @@ See "Fundamentals of ARMv8-A", Chapter "Processor state"
 
 ## Common instructions
 
-[A more detailed instruction quick reference](./arm64.pdf) 
+[A more detailed instruction quick reference](../../arm64.pdf) 
 
 * mrs	Load value from a system register to one of the general purpose registers (x0–x30)
 * and	Perform the logical AND operation. 

@@ -131,3 +131,36 @@ Contents of section .rodata:                                                    
  ffff000000084a08 0a0d0000 00000000 6572726f 72207768  ........error wh
  ffff000000084a18 696c6520 73746172 74696e67 206b6572  ile starting ker
 ```
+
+## Online disassembler (ODA)
+
+https://onlinedisassembler.com/odaweb/
+
+A nice web UI to disassemble an ELF file uploaded. 
+
+![image-20210201130120738](image-20210201130120738.png)
+*Figure above: upload file to ODA.* 
+
+------------------------------
+
+![image-20210201130221211](image-20210201130221211.png)
+*Figure above: ODA recognizes the uploaded file as ELF for aarch64.* 
+
+------------------
+
+
+![image-20210201130353802](image-20210201130353802.png)
+
+*Figure above: kernel8.elf disassembled. Top (the blue bar): a mini map of memory layout. Left: a list of symbols. Right: the list of instructions at the specified symbol.* 
+
+------------------
+
+![image-20210201130643484](image-20210201130643484.png)
+
+*Figure above: ODA shows ELF sections of kernel8.elf.* 
+
+----------------------------------
+
+![image-20210201131041671](image-20210201131041671.png)
+
+*Figure above: ODA visualizes the memory layout of IRQ vectors* 

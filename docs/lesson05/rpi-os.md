@@ -2,8 +2,6 @@
 
 ## Objectives
 
-
-
 Our kernel is evolving from an "embedded" kernel which often lacks user/kernel separation to a multiprogrammed kernel. 
 
 * Run tasks in EL0
@@ -29,7 +27,7 @@ We will:
 
 Each system call is a synchronous exception. A user program prepares all necessary arguments, and then run `svc` instruction. Such exceptions are handled at EL1 by the kernel. The kernel validates all arguments, does the syscall, and exists from the exception. After that, the user task resumes at EL0 right after the `svc` instruction. 
 
-<img src="figures/timeline-0.png" alt="timeline-syscall" style="zoom: 33%;" />
+![](figures/timeline-0.png)
 
 We have 4 simple syscalls: 
 
@@ -43,7 +41,7 @@ All syscalls are defined in the [sys.c](https://github.com/s-matyukevich/raspber
 Let's use `write` syscall as an example: 
 
 ```
-//sys.S
+//sys.S, executed at the user level
 .globl call_sys_write
 call_sys_write:
     mov w8, #SYS_WRITE_NUMBER
@@ -59,25 +57,33 @@ In commodity OSes, such wrapper functions are usually in user library such as [g
 
 We need this new mechanism. It's in the same spirit as we move from EL2/3 to EL1. (Recall: how did we do it?)
 
-Previously, our kernel may take interrupt EL1. Now, it has to take exception (svc) at EL0. To accommodate this, both `kernel_entry` and `kernel_exit` macros accepts an additional argument `el`, indicating which exception level an exception is taken from. The information is required to properly save/restore stack pointer. Here are the two relevant parts from the `kernel_entry` and `kernel_exit` macros.
+Previously, our kernel runs at EL1; when an interrupt occurs, it takes the interrupt at EL1. Now, we need to take exception (svc) from EL0 to EL1. To accommodate this, both `kernel_entry` and `kernel_exit` macros accepts an additional argument `el`, indicating the EL an exception is taken from. The information is required to properly save/restore stack pointer. Here are the two relevant parts from the `kernel_entry` and `kernel_exit` macros.
 
-```
-    .if    \el == 0
-    mrs    x21, sp_el0
-    .else
-    add    x21, sp, #S_FRAME_SIZE
-    .endif /* \el == 0 */
-```
-
-```
-    .if    \el == 0
-    msr    sp_el0, x21
-    .endif /* \el == 0 */
+```assembly
+// kernel_entry
+.if    \el == 0
+mrs    x21, sp_el0
+.else
+add    x21, sp, #S_FRAME_SIZE
+.endif 
 ```
 
-We are using 2 distinct stack pointers (SP) for EL0 and EL1. This is a common design because we want to separate user/kernel. Supported by CPU hardware, after taking an exception from EL0 to EL1, the CPU is using the SP for EL1. The SP for EL0 can be found in the `sp_el0` register. The value of this register must be stored and restored upon entering/exiting the kernel, even if the kernel does not `sp_el0` in the exception handler. Reason: we need to virtualize `sp_el0` for each task because each task has its own user stack. Try to visualize this in your mind. 
+```assembly
+// kernel_exit
+.if    \el == 0
+msr    sp_el0, x21
+.endif 
+...
+eret
+```
 
-When we do `kernel_exit`, how do we specify which EL to return to, EL0 or EL1? We don't have to explicitly specify so in `eret`. This EL level is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
+We are using 2 distinct stacks for EL0 and EL1. This is a common design because we want to separate user/kernel. 
+
+Supported by CPU hardware, after taking an exception from EL0 to EL1, the CPU is using the SP for EL1. The SP for EL0 can be found in the `sp_el0` register. 
+
+The value of this register must be stored and restored upon entering/exiting the kernel, even if the kernel does not  use `sp_el0` in the exception handler. Reason: we need to virtualize `sp_el0` for each task because each task has its own user stack. Try to visualize this in your mind. 
+
+When we do `kernel_exit`, how do we specify which EL to return to, EL0 or EL1? `eret` does not have to explicitly specify so. This EL level is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
 
 > How did we treat SP when taking interrupts (from EL1)? Revisit the figures in previous experiments. 
 
@@ -141,109 +147,13 @@ ret_from_syscall:
 
 Atop that, the kernel implements two complementary ways for launching a user process. Overview: 
 
-<img src="figures/timeline-1.png" alt="timeline-clone" style="zoom: 33%;" />
+![](figures/timeline-1.png)
 
 --------------
 
+### Method 1: Forking user processes
 
-#### Method 1: Moving a kernel task to EL0 
-
-Overview: upon its creation, the kernel task calls its main function, `kernel_process()`, which calls `move_to_user_mode()`. The later prepares CPU context for exiting to EL0. Then `kernel_process()` returns to `ret_from_fork` which invokes the familiar `kernel_exit`. Eventually, an `eret` instruction - boom! We land in EL0. 
-
-**Code walkthrough**
-
-First create a process (i.e. a task) as we did before. This is a "kernel" process to execute at EL1. 
-
-```
-// kernel.c
-int res = copy_process(PF_KTHREAD, (unsigned long)&kernel_process, 0, 0);
-```
-
-The kernel process invokes [move_to_user_mode()](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/fork.c#Li47), passing a function pointer to the `user_process` as the first argument. 
-
-```
-void kernel_process(){
-    printf("Kernel process started. EL %d\r\n", get_el());
-    int err = move_to_user_mode((unsigned long)&user_process);
-```
-
-Now let's see what `move_to_user_mode` function is doing.
-
-```
-int move_to_user_mode(unsigned long pc)
-{
-    struct pt_regs *regs = task_pt_regs(current);
-    memzero((unsigned long)regs, sizeof(*regs));
-    regs->pc = pc;
-    regs->pstate = PSR_MODE_EL0t;
-    unsigned long stack = get_free_page(); //allocate new user stack
-    if (!stack) {
-        return -1;
-    }
-    regs->sp = stack + PAGE_SIZE;
-    current->stack = stack;
-    return 0;
-}
-```
-
-**pt_regs: the exception stack frame** 
-
-In the previous experiment: when an interrupt happens, `kernel_entry` saves CPU context to a *stack frame* marked as "saved regs", which is somewhere in the middle of a kernel task's stack. 
-
-<img src="figures/pt_regs.png" alt="saved-regs" style="zoom:30%;" />
-
-
-
-In this experiment, our kernel will additionally handle sync exceptions (syscalls). When a syscall happens, the CPU will create a stack frame in the same format called [pt_regs](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/fork.h#L21). The name comes from Linux again. When syscall returns, the kernel unwinds `pt_regs`. 
-
-For *the first time* return to EL0, `move_to_user_mode()` sets up `pt_regs`:
-
-* `pt_regs.pc` This is the first instruction to be executed by the task once it lands in user mode via `eret`. 
-
-* `pstate`. This specifies the CPU state for the task. Later, `kernel_exit` copies this field to `spsr_el1`. `eret` restores the CPU state from `pstate`. [PSR_MODE_EL0t](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/fork.h#L9) constant specifies that we will go to EL0. See [manual](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/spsr_el1). 
-
-* Furthermore, `move_to_user_mode`  allocates a new page for the user stack and sets `sp` field to point to the page top. 
-
-**Where is pt_regs?**
-
-It is at the top of the stack. See the figure above. Right before `kernel_exit()`, the task's stack is unwound just to the beginning of `pt_regs`. Therefore, `kernel_exit()` will restore CPU regs from the stack. 
-
-**task_pt_regs()** calculates the address of a task's `pt_regs`. See the code below which is self-evident. Recall that THREAD_SIZE == 4KB which is the memory size for the task. 
-
-```
-struct pt_regs * task_pt_regs(struct task_struct *tsk){
-	unsigned long p = (unsigned long)tsk + THREAD_SIZE - sizeof(struct pt_regs);
-	return (struct pt_regs *)p;
-}
-```
-
-**Addition to ret_from_fork()**
-
-<!-------improve writing----->
-
-As you might notice `ret_from_fork` has been updated. This happens in the middle of the [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/entry.S#L188) function.
-
-```
-.globl ret_from_fork
-ret_from_fork:
-    bl    schedule_tail
-    cbz   x19, ret_to_user            // not a kernel thread
-    mov   x0, x20
-    blr   x19
-ret_to_user:
-    bl disable_irq
-    kernel_exit 0
-```
-
-Now, after a kernel thread finishes, the execution goes to the `ret_to_user` label, here we disable interrupts and perform normal exception return, using previously prepared processor state.
-
-If you get confused, revisit the "overview" figure above. 
-
-#### Method 2: Forking user processes
-
-The clone syscall, named `call_sys_clone()` in our kernel, forks user task. For instance, [user_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/kernel.c#L22) function calls `call_sys_clone` to spawn two user tasks. 
-
-<!--- need a fig--->
+At the user level, user_process() calls `call_sys_clone` to spawn a new task. 
 
 ```
 // sys.S
@@ -266,7 +176,7 @@ call_sys_clone:
 thread_start:
     mov    x29, 0
 
-    /* Pick the function arg and execute.  */
+    /* Pick up the function arg and execute.  */
     mov    x0, x11
     blr    x10
     
@@ -275,22 +185,20 @@ thread_start:
     svc    0x0
 ```
 
-The `clone` wrapper above mimics the [coresponding function](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/aarch64/clone.S;h=e0653048259dd9a3d3eb3103ec2ae86acb43ef48;hb=HEAD#l35) from in the `glibc` library. This function does the following.
+The `clone` wrapper above mimics the [coresponding function](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/aarch64/clone.S;h=e0653048259dd9a3d3eb3103ec2ae86acb43ef48;hb=HEAD#l35) from in the `glibc` library. 
 
-1. x0-x3 contain syscall arguments. They are intended for the child task. Save them to x10-x11. Why? The new task will pick them in `thread_start`. (NB: our syscall handler `el0_svc` does not save x0-x3. Read on.)
-1. Put the stack point for the new task in x0, as expected by `sys_clone(unsigned long stack)`. 
-1. Starts syscall via `svc`. Do syscall ... 
+1. x0-x3 contain syscall arguments. They are intended for the child task. Save fn and arg to x10-x11. Why? The kernel syscall handler `el0_svc` does not preserve x0-x3. The new task will pick up x10 and x11 in `thread_start`. 
+1. Save the pointer to the new task's stack in x2, as expected by `sys_clone(unsigned long stack)`. 
+1. Starts syscall via `svc`. 
 1. Upon returning from syscall, checks return value in x0: 
-   * if 0, we are executing inside of the newly created task. In this case, execution goes to `thread_start` label.
-   * If not 0, x0 is the PID of the new task. This means that we are executing inside the original thread — just return to the caller in this case.
-1. thread_start executes in the new task with the give entry function (x10) and the arg to the function (x11). Note x29 (FP) is cleared for correct stack unwinding. See [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/docs/lesson03/linux/low_level-exception_handling.md).
+   * if 0, we are executing inside the child task. In this case, execution goes to `thread_start` label.
+   * If not 0, we are executing in the parent task. x0 is the PID of the child task. 
+1. thread_start executes in the new task with the give entry function (x10) and the arg to the function (x11). Note x29 (FP) is cleared for correct stack unwinding at the user level. See [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/docs/lesson03/linux/low_level-exception_handling.md).
 1. After the function finishes, `exit` syscall is performed — it never returns.
-
-<!--- As you can see, the semantics of the clone wrapper function and clone syscall differ: --->
 
 #### Implementing clone in kernel
 
-Clone syscall handler can be found [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/sys.c#L11). It is very simple and it just calls already familiar `copy_process` function. This function, however, has been modified since the last lesson — now it supports cloning user threads as well as kernel threads. The source of the function is listed below.
+Inside the kernel, clone() goes to is `sys_clone()` (sys.c). It just calls `copy_process()` . This function, however, has been modified since the last lesson. 
 
 ```
 int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg, unsigned long stack)
@@ -333,27 +241,140 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 }
 ```
 
-In case, when we are creating a new kernel thread, the function behaves exactly the same, as described in the previous lesson. In the other case, when we are cloning a user thread, this part of the code is executed.
+If creating a new kernel thread, the function does the same thing as before. If creating a user thread, the function takes care of `pt_regs` as it is unique to a user thread -- the state saved/restored upon entering/exiting the kernel. 
 
 ```
-        struct pt_regs * cur_regs = task_pt_regs(current);
-        *childregs = *cur_regs;
-        childregs->regs[0] = 0;
-        childregs->sp = stack + PAGE_SIZE;
-        p->stack = stack;
+struct pt_regs * cur_regs = task_pt_regs(current);
+*childregs = *cur_regs;
+childregs->regs[0] = 0;
+childregs->sp = stack + PAGE_SIZE;
+p->stack = stack;
 ```
 
-We populate the CPU context, i.e. `pt_regs`, for the new task. Note that `pt_regs` is always at the top of the stack page, because when syscall enters/exits the kernel, the kernel stack is empty. 
+We populate the CPU context, i.e. `pt_regs`, for the new task. Note that `pt_regs` is always at the top of the stack page (recall the figure above), because when syscall enters/exits the kernel, the kernel stack is empty. 
 
-<!---The first thing that we are doing here is getting access to the processor state, saved by the `kernel_entry` macro. It is not obvious, however, why we can use the same `task_pt_regs` function, which just returns `pt_regs` area at the top of the kernel stack. Why isn't it possible that `pt_regs` will be stored somewhere else on the stack? The answer is that this code can be executed only after `clone` syscall was called. At the time when syscall was triggered the current kernel stack was empty (we left it empty after moving to the user mode). That's why `pt_regs` will always be stored at the top of the kernel stack. This rule will be kept for all subsequent syscalls because each of them will leave kernel stack empty before returning to the user mode.--->
-
-`x0` in the new state is set to `0`, because `x0` will be interpreted by the caller as a return value of the syscall. We've just seen how clone wrapper function uses this value to determine whether we are still executing as a part of the original thread or a new one.
+`x0` in the new state is set to `0`, because `x0` will be the return value of the `clone` syscall. We've just seen how clone wrapper function uses this value to determine whether we are in the parent or the child task. 
 
 Next `sp` for the new task is set to point to the top of the new user stack page. We also save the pointer to the stack page in order to do a cleanup after the task finishes.
 
+### Method 2: Moving an existing kernel task to EL0 
+
+Overview: upon its creation, the kernel task calls its main function, `kernel_process()`, which calls `move_to_user_mode()`. The later prepares CPU context for exiting to EL0. Then `kernel_process()` returns to `ret_from_fork` which invokes the familiar `kernel_exit`. Eventually, an `eret` instruction - boom! We land in EL0. 
+
+**Code walkthrough**
+
+First create a process (i.e. a task) as we did before. This is a "kernel" process to execute at EL1. 
+
+```
+// kernel.c
+int res = copy_process(PF_KTHREAD, (unsigned long)&kernel_process, 0, 0);
+```
+
+The kernel process invokes [move_to_user_mode()](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/fork.c#Li47), passing a function pointer to the `user_process` as the first argument. 
+
+```
+void kernel_process() {
+    printf("Kernel process started. EL %d\r\n", get_el());
+    int err = move_to_user_mode((unsigned long)&user_process);
+    ...
+```
+
+The `move_to_user_mode` function prepares pt_regs and the user stack, so the kernel process becomes a "legit" user process. 
+
+```
+int move_to_user_mode(unsigned long pc)
+{
+    struct pt_regs *regs = task_pt_regs(current);
+    memzero((unsigned long)regs, sizeof(*regs));
+    regs->pc = pc;
+    regs->pstate = PSR_MODE_EL0t;
+    unsigned long stack = get_free_page(); //allocate new user stack
+    if (!stack) {
+        return -1;
+    }
+    regs->sp = stack + PAGE_SIZE;
+    current->stack = stack;
+    return 0;
+}
+```
+
+**pt_regs: the exception stack frame** 
+
+In the previous experiment: when an interrupt happens, `kernel_entry` saves CPU context to a *stack frame* marked as "saved regs", which is somewhere in the middle of a kernel task's stack. 
+
+![](figures/pt_regs.png)
+
+> Dump pt_regs in GDB:
+>
+> ```
+> >>>  p /x *(struct pt_regs *)((char *)current + 4096 - sizeof(struct pt_regs))
+> $7 = {                                                              
+> regs = {[0x0] = 0x401fd0, [0x1] = 0x0, [0x2] = 0x401fe7, [0x3] = 0x401f40, [0x4] = 0x0 <repeats 25 times>, [0x1d] = 0x401fc0, [0x1e] = 0x8088c}, 
+> sp = 0x401fc0,                                               
+> pc = 0x830cc,                                                         
+> pstate = 0x60000000 }                                                 
+> ```
+>
+> Check where syscall happens:                                                                    
+> ```
+> >>> info line *0x830cc                                                                        
+> Line 7 of "src/sys.S" starts at address 0x830cc <call_sys_write+8> and ends at 0x830d0 <call_sys_
+> malloc>.                                                                                      
+> ```
+
+
+In this experiment, our kernel will additionally handle sync exceptions (syscalls). When a syscall happens, the CPU will create a stack frame in the same format called [pt_regs](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/fork.h#L21). The name comes from Linux again. When syscall returns, the kernel unwinds `pt_regs`. 
+
+For *the first time* return to EL0, `move_to_user_mode()` sets up `pt_regs`:
+
+* `pt_regs.pc` This is the first instruction to be executed by the task once it lands in user mode via `eret`. 
+
+* `pstate`. This specifies the CPU state for the task. Later, `kernel_exit` copies this field to `spsr_el1`. `eret` restores the CPU state from `pstate`. [PSR_MODE_EL0t](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/fork.h#L9) constant specifies that we will go to EL0. See [manual](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/spsr_el1). 
+
+* Furthermore, `move_to_user_mode`  allocates a new page for the user stack and sets `sp` field to point to the page top. 
+
+**Where is pt_regs?**
+
+It is at the top of the stack. See the figure above. Right before `kernel_exit()`, the task's stack is unwound just to the beginning of `pt_regs`. Therefore, `kernel_exit()` will restore CPU regs from the stack. 
+
+**task_pt_regs()** calculates the address of a task's `pt_regs`. See the code below which is self-evident. Recall that THREAD_SIZE == 4KB which is the memory size for the task. 
+
+```
+struct pt_regs * task_pt_regs(struct task_struct *tsk){
+	unsigned long p = (unsigned long)tsk + THREAD_SIZE - sizeof(struct pt_regs);
+	return (struct pt_regs *)p;
+}
+```
+
+#### ret_from_fork(), augmented
+
+New addition is made to the middle of the [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/entry.S#L188) function: 
+
+```
+.globl ret_from_fork
+ret_from_fork:
+    bl    schedule_tail
+    cbz   x19, ret_to_user            // not a kernel thread
+    mov   x0, x20
+    blr   x19
+ret_to_user:
+    bl disable_irq
+    kernel_exit 0
+```
+
+Why are x19 and x20? That is where `copy_process()` saves the `fn` and `arg` specified for a new user process. 
+
+Now, after a kernel thread finishes, the execution jumps to `ret_to_user`, where it disables interrupts and performs exception return (kernel_exit), using previously prepared processor state.
+
+If you get confused, revisit the "overview" figure: 
+
+![](figures/timeline-1.png)
+
+
+
 ## Exiting a task
 
-After each user tasks finishes it should call `exit` syscall (In the current implementation `exit` is called implicitly by the `clone` wrapper function.).  `exit` syscall then calls [exit_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/sched.c) function, which is responsible for deactivating a task. The function is listed below.
+Each user task calls the `exit` syscall at the end of its life cycle. In the current implementation, the `call_sys_clone` wrapper calls `exit`; see above.  Into the kernel, `exit` syscall goes to `exit_process()`, which deactivates a task. The function is listed below.
 
 ```
 void exit_process(){
@@ -378,4 +399,4 @@ Following Linux convention, we are not deleting the task at once but set its sta
 
 ## Conclusion
 
-Now that the RPi OS can manage user tasks, we become much closer to the full process isolation. But one important step is still missing: all user tasks share the same physical memory and can easily read one another's data. In the next lesson, we are going to introduce virtual memory and fix this issue.
+Now that the kernel can manage user tasks, we become much closer to the full process isolation. But one important step is still missing: all user tasks share the same physical memory and can easily read one another's data. In the next lesson, we are going to introduce virtual memory and fix this issue.

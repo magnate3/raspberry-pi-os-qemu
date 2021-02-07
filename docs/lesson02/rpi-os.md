@@ -20,7 +20,7 @@ ARMv8 defines 4 exception levels. An exception level is a processor execution mo
 
 The least privileged exception level, i.e. lowest level, is level 0. When processor operates at this level, it mostly uses only general purpose registers (X0 - X30) and stack pointer register (SP). EL0 also allows using `STR` and `LDR` instructions to load and store data to and from memory, among other instructions commonly used by a user program.
 
-![](figures\els.png)
+![](figures/els.png)
 
 Why exception levels? Because an OS needs to implement *isolation*. A user process should not be able to access other process's data. To achieve such behavior, a kernel always runs each user process at EL0. Operating at this exception level a process can only use it's own virtual memory and can't access any instructions that change ELs, MMUs, etc. 
 
@@ -66,10 +66,7 @@ Let's not reinvent the wheel and use one of  [existing printf implementations](h
 
 ### QEMU + GDB debugging
 
-<!--- Todo: add GDB debugging ---> 
-
-GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. A quick note is [here](../../gdb.md).
-
+GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. A quick note is [here](gdb.md).
 
 ## Code Walkthrough
 

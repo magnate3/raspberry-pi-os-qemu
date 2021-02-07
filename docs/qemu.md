@@ -10,7 +10,7 @@ export PATH="$(pwd)/qemu/aarch64-softmmu:${PATH}"
 wget https://github.com/fxlin/p1-kernel/releases/download/exp1/kernel8.img
 ```
 
-## Launch the kernel 
+## Launch the kernel, free run
 
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio
@@ -22,7 +22,7 @@ Explanation:
 * -M machine type
 * Two "-serial" options correspond to the two UARTs of Rpi3 as emulated by QEMU. **Note:** Our kernel writes message to the 2nd one. So we tell QEMU to redirect the 2nd UART to stdio. 
 
-## Launch the kernel in debug mode
+## Launch the kernel, for GDB debugging 
 
 ```
 # will wait for gdb to connect at local tcp 1234
@@ -44,7 +44,7 @@ qemu-system-aarch64 -machine raspi3 -serial null -serial mon:stdio -kernel kerne
 ```
 More on [the monitor mode](https://en.wikibooks.org/wiki/QEMU/Monitor). 
 
-## Run the kernel with tracing 
+## Launch the kernel with tracing 
 ```
 qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log 
 ```
@@ -108,9 +108,10 @@ run-debug() {
 To use: 
 
 ```
+# switch to dir where qemu tree is under qemu/
 $ source env-qemu.sh
-# change to dir where kernel8.img resides
 
+# switch to dir where kernel8.img resides
 $ run
 VNC server running on 127.0.0.1:5900
 kernel boots...

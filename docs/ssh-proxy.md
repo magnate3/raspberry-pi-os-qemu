@@ -12,16 +12,18 @@
 
 This document describes server resources and how to connect for development. 
 
-|                          | Projects    | hardware specs                                | OS               |
-| ------------------------ | ----------- | --------------------------------------------- | ---------------- |
-| granger1.cs.virginia.edu | p1,p3,p4    | Dual Xeon 2630v4 Broadwell (10c20t), 20 cores | Ubuntu 20.04 LTS |
-| labsrv06.cs.virginia.edu | p1,p2,p3,p4 | Single Xeon Silver 4410 CPU (8c16t), 8 cores  | Ubuntu 20.04 LTS |
+|                                                              | Projects   | hardware specs                                | OS               |
+| ------------------------------------------------------------ | ---------- | --------------------------------------------- | ---------------- |
+| granger1.cs.virginia.edu                                     | p1-p4      | Dual Xeon 2630v4 Broadwell (10c20t), 20 cores | Ubuntu 20.04 LTS |
+| labsrv06.cs.virginia.edu (Jan 30: temporarily out of service) | All but p2 | Single Xeon Silver 4410 CPU (8c16t), 8 cores  | Ubuntu 20.04 LTS |
 
-Using your CS credentials (not the UVA ones). See [wiki page](https://www.cs.virginia.edu/wiki/doku.php?id=compute_resources). Contact felixlin@ if you do not have CS credentials. 
+<!--- Using your CS credentials (not the UVA ones). See [wiki page](https://www.cs.virginia.edu/wiki/doku.php?id=compute_resources). Contact felixlin@ if you do not have CS credentials.  --->
+
+Use the credentials that we share with you. 
 
 These servers are behind the campus firewall. You need to first SSH to **portal.cs.virginia.edu**, and from there SSH over to the CS servers, e.g. labsrv06. This is described [here](https://www.cs.virginia.edu/wiki/doku.php?id=linux_ssh_access). 
 
-<img src="images/servers.png" alt="image-20210124164456011" style="zoom:50%;" />
+![](images/servers.png)
 
 ## Terminal over SSH
 
@@ -39,7 +41,7 @@ $ ssh xl6yq@granger1.cs.virginia.edu
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-45-generic x86_64)
 ```
 
-SSH Connecting to CS servers can be automated. 
+Connecting to CS servers can be automated. 
 
 ![](images/ssh-proxy.gif)
 
@@ -123,7 +125,7 @@ tl;dr: VSCode will connect to the CS server (Linux) using SSH under the hood. To
 
 ![](vscode-remove-ssh.png)
 
-> *Screenshot from Peiyi Yang (@py5yy). Her VSCode color scheme is a different than mine.* 
+> *Screenshot from Peiyi Yang (py5yy@). Her VSCode color scheme is different from mine.* 
 
 ### Windows caveat 1: ssh keys
 
@@ -131,7 +133,7 @@ The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32
 
 ![](images/vscode-ssh-config.png)
 
->  *Screenshot from Peiyi Yang (@py5yy). Her VSCode color scheme is a different than mine.* 
+>  *Screenshot from Peiyi Yang (py5yy@). * 
 
 If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
 

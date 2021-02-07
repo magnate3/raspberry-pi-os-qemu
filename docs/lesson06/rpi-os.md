@@ -13,7 +13,7 @@ Make our tiny kernel capable of:
 
 Prior to this experiment, our kernel can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
 
-We will take the following steps. 
+We take the following steps. 
 
 * Set up a pgtable for kernel. Using linear mapping. 
 * Turn on MMU shortly after kernel boots. This is a common kernel design. 
@@ -60,7 +60,7 @@ Notable points:
   
 * There are 4 levels in the table hierarchy: PGD (Page Global Directory), PUD (Page Upper Directory), PMD (Page Middle Directory), PTE (Page Table Entry). PTE is the last table in the hierarchy and it points to the actual page in the physical memory. 
 
-  > Don't read too much into the terms, which just represent lv1, 2, ... pgtables. Them terms come from the Linux kernel (I guess x86), not ARM64. Over years, they became common lingo among kernel hackers. 
+  > Don't read too much into the terms, which just represent lv1, 2, ... pgtables. Them terms come from the Linux kernel (x86), not ARM64. Over years, they became a common lingo among kernel hackers. 
 
 * Besides holding a physical address, each pgtable item holds extra bits crucial for translation. Will examine the format below. 
 
@@ -83,7 +83,7 @@ This means that each pgtable is `512 * 8 = 4096` bytes or 4 KB. **A pgtable is e
 
 ### Section (2MB) mapping
 
-This is specific to ARM64 for mapping large parts of continuous physical memory. In this case, instead of 4 KB pages, we can directly map 2 MB blocks that are called sections. This allows to eliminate one single level of translation. The translation diagram, in this case, looks like the following.
+This is specific to ARM64 for mapping large, continuous physical memory. Instead of 4 KB pages, we directly map 2MB blocks called sections. This eliminates one level of translation. The translation diagram, in this case, looks like the following.
 
 ```
                            Virtual address                                               Physical Memory
@@ -135,7 +135,7 @@ See [Arm's official page](https://armv8-ref.codingbelief.com/en/chapter_d4/d43_3
 
 ### Configuring page attributes
 
-As I mentioned in the previous section, each block descriptor contains a set of attributes (called MemAttr, bits[5:2]) that controls various virtual page parameters, notably cacheability or shareability. However, the attributes that are most important for our discussion are NOT configured directly in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days when ARM hardware was way simpler were gone)
+As I mentioned in the previous section, each block descriptor contains a set of attributes (called MemAttr, bits[5:2]) that controls various virtual page parameters, notably cacheability or shareability. However, the attributes that are most important for our discussion are NOT encoded in the descriptor. Instead, ARM processors implement a trick for compressing descriptor attributes commonly used. (The days of simpler ARM hardware were gone)
 
 **Memory attribute indirection** 
 
