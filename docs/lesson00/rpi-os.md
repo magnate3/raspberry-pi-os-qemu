@@ -12,20 +12,47 @@ baremetal; kernel; kernel binary; kernel image
 
 This is where you develop kernel code. 
 
-We have configured departmental server(s) for you to use. See [here](../ssh-proxy.md). You can develop on your local machine and test on the servers. 
+### If you build kernel for Rpi3 ...
 
-Alternatively, you may do everything on your local machine, here are suggestions: 
+Note: 
 
-- Linux. Recommended: Ubuntu 20.04 LTS. 
-- Windows: WSL or WSL2. See [instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10#:~:text=To%20check%20your%20version%20and,command%20in%20Windows%20Command%20Prompt). My Windows machine runs WSL2 with Ubuntu18.04. 
-- OS X: (likely HomeBrew is needed. Not tested)
+* Recommended configurations are <u>underscored</u>.
+
+* How to connect to CS server(s): see [here](../ssh-proxy.md). 
+
+* VSCode: optional. It's available on Win/OSX/Linux. It can be used for any configuration below.
+
+| Your local machine runs: | Develop remotely on CS servers                               | Develop locally                   |
+| ------------------------ | ------------------------------------------------------------ | --------------------------------- |
+| Windows                  | WSL for SSH shell; then download (scp) kernel binary to local | <u>WSL for toolchain</u>          |
+| Linux                    | SSH shell; then download (scp) kernel binary to local        | <u>Native toolchain + console</u> |
+| Mac                      | <u>Terminal for SSH shell</u>                                | HomeBrew (untested)               |
+
+### If you build kernel for QEMU ...
+
+Note: 
+
+* Recommended configurations are <u>underscored</u>.
+
+* How to connect to CS server(s): see [here](../ssh-proxy.md). 
+
+* VSCode: optional. It's available on Win/OSX/Linux. It can be used for any configuration below.
+
+| Your local machine runs: | If develop remotely on CS servers | If develop on your local machine              |
+| ------------------------ | --------------------------------- | --------------------------------------------- |
+| Windows                  | <u>WSL for SSH shell</u>          | WSL for toolchain. gdbserver could be tricky. |
+| Linux                    | <u>SSH shell</u>                  | <u>Native toolchain + console</u>             |
+| Mac                      | <u>Terminal for SSH shell</u>     | HomeBrew (untested)                           |
 
 ### Toolchain
 
-These are compiler, linker, etc. for us to generate the kernel code. Use the one provided by Ubuntu 
+These are compiler, linker, etc. for us to generate the kernel code. Use the one provided by Ubuntu. 
 
 ```
+# this is necessary only when you develop kernel code on your local machine 
+# the server already has the toolchain installed
 $ sudo apt install gcc-aarch64-linux-gnu 
+$ sudo apt install gdb-multiarch
 
 $ aarch64-linux-gnu-gcc --version
 aarch64-linux-gnu-gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
@@ -137,23 +164,19 @@ Viola! You just built your first baremetal program for Rpi3!
 
 #### Compile QEMU from source 
 
-Need QEMU >v2.12. Newer version is likely fine. The following shows the default QEMU coming with Ubuntu 18.04 is too old.  For instance: 
+*This is required no matter you develop on local machines or on the server.* 
+
+Clean any pre-installed qemu and install necessary tools: 
 
 ```
-$ qemu-system-aarch64  --version
-QEMU emulator version 2.11.1(Debian 1:2.11+dfsg-1ubuntu7.26)
-Copyright (c) 2003-2017 Fabrice Bellard and the QEMU Project developers
-```
-
-Now, build QEMU from source. Clean any pre-installed qemu and install necessary tools: 
-
-```
+# this is necessary only when you develop kernel code on your own machine (not recommended)
+# the server already has these software uninstalled/installed
 sudo apt remove qemu-system-arm
 sudo apt install gdb-multiarch build-essential pkg-config
 sudo apt install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
 ```
 
-Grab the source.  Our QEMU is based on upstream v4.2 **with some aarch64 debugging support.** 
+Grab the QEMU source.  Our QEMU is based on upstream v4.2 **with custom aarch64 debugging support.** 
 
 ```
 git clone https://github.com/fxlin/qemu-cs4414.git
@@ -170,13 +193,14 @@ If you encounter compilation errors (e.g. unmet dependencies), make sure you run
 Now try QEMU & check its version. The supported machines should include Rpi3
 
 ```
-$ qemu-system-aarch64  --version
-QEMU emulator version 4.2.0 (v4.2.0-11797-g2890edc853-dirty)
-Copyright (c) 2003-2019 Fabrice Bellard and the QEMU Project developers
+$ qemu-system-aarch64  --version                 
+QEMU emulator version 5.0.50 (v5.0.0-1247-gaf6f75d03f-dirty)                   
+Copyright (c) 2003-2020 Fabrice Bellard and the QEMU Project developers        
+patched for cs4414/6456 aarch64 kernel hacking    
 
 $ qemu-system-aarch64 -M help|grep rasp
-raspi2               Raspberry Pi 2
-raspi3               Raspberry Pi 3
+raspi2               Raspberry Pi 2B
+raspi3               Raspberry Pi 3B
 ```
 
 #### Test the compilation

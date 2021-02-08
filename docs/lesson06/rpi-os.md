@@ -11,6 +11,8 @@ Make our tiny kernel capable of:
 
 ## Roadmap
 
+**Source code location: p1-kernel/src/lesson06**
+
 Prior to this experiment, our kernel can run and schedule user processes, but the isolation between them is not complete - all processes and the kernel itself share the same memory. This allows any process to easily access somebody else's data and even kernel data. And even if we assume that all our processes are not malicious, there is another drawback: before allocating memory each process need to know which memory regions are already occupied - this makes memory allocation for a process more complicated.
 
 We take the following steps. 

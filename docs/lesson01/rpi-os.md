@@ -4,6 +4,8 @@
 
 ![](figures/helloworld.png)
 
+![](figures/overview.png)
+
 We will build: a minimal, baremetal program that can print "Hello world" via Rpi3's UART. 
 
 Students will experience: 
@@ -15,6 +17,8 @@ Students will experience:
 3. arm64 assembly (lightly)
 
 4. Basic knowledge on Rpi3 and its UART hardware
+
+**Source code location: p1-kernel/src/lesson01**
 
 ## Roadmap
 
@@ -28,9 +32,9 @@ Create a Makefile project. Add minimum code to boot the platform. Initialize the
 
 ## Project structure
 
-1. **Makefile** We will use the [make](http://www.math.tau.ac.il/~danha/courses/software1/make-intro.html) utility to build the kernel. `make`'s behavior is configured by a Makefile, which contains instructions on how to compile and link the source code. 
-1. **src** This folder contains all of the source code.
-1. **include** All of the header files are placed here. 
+1. `Makefile`: We will use the GNU Makefile to build the kernel. 
+1. `src`: This folder contains all of the source code.
+1. `include`: All of the header files are placed here. 
 
 Note: Of all the subsequent experiments in p1, the source code has the same structure. 
 

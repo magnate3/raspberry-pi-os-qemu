@@ -4,6 +4,8 @@ We will build a minimum kernel that can schedule multiple cooperative tasks.
 
 ![](qemu-sched.gif)
 
+**Source code location: p1-kernel/src/lesson04a**
+
 ## Roadmap
 From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
 

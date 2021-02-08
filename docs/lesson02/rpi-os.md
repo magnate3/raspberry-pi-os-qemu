@@ -4,6 +4,8 @@
 
 ## Objectives
 
+**Source code location: p1-kernel/src/lesson02**
+
 We are going to build: 
 
 A baremetal program that can switch among CPU exception levels and print out the current level. 

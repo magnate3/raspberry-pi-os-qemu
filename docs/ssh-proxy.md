@@ -1,14 +1,4 @@
-# Accessing the CS servers 
-
-  * [Terminal over SSH](#terminal-over-ssh)
-    * [1\. Use key\-based authentication in lieu of password](#1-use-key-based-authentication-in-lieu-of-password)
-    * [2\. Connect to CS servers using one line of command](#2-connect-to-cs-servers-using-one-line-of-command)
-    * [3\. Save connection info in SSH config](#3-save-connection-info-in-ssh-config)
-  * [Remote development with VSCode](#remote-development-with-vscode)
-    * [Windows caveat 1: ssh keys](#windows-caveat-1-ssh-keys)
-    * [Windows caveat 2: an outdated ssh client](#windows-caveat-2-an-outdated-ssh-client)
-    * [Launch a terminal](#launch-a-terminal)
-    * [File browsing &amp; editing](#file-browsing--editing)
+# Accessing the course server(s)
 
 This document describes server resources and how to connect for development. 
 
@@ -19,11 +9,12 @@ This document describes server resources and how to connect for development.
 
 <!--- Using your CS credentials (not the UVA ones). See [wiki page](https://www.cs.virginia.edu/wiki/doku.php?id=compute_resources). Contact felixlin@ if you do not have CS credentials.  --->
 
-Use the credentials that we share with you. 
+These servers are behind the campus firewall. You need to first SSH to **portal.cs.virginia.edu**, and from there SSH over to the course servers, e.g. labsrv06. This is described [here](https://www.cs.virginia.edu/wiki/doku.php?id=linux_ssh_access). 
 
-These servers are behind the campus firewall. You need to first SSH to **portal.cs.virginia.edu**, and from there SSH over to the CS servers, e.g. labsrv06. This is described [here](https://www.cs.virginia.edu/wiki/doku.php?id=linux_ssh_access). 
+**WARNING:** portal is managed by the UVA IT. You use your existing computing ID & password. The course server is managed by cs4414 staff. Use the credentials that we share with you. 
 
 ![](images/servers.png)
+*Figure above: your local machine, the portal, and the server. Texts on the bottom: key files and their purpose.* 
 
 ## Terminal over SSH
 
@@ -41,15 +32,15 @@ $ ssh xl6yq@granger1.cs.virginia.edu
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-45-generic x86_64)
 ```
 
-Connecting to CS servers can be automated. 
+Connecting to the course servers can be automated. 
 
 ![](images/ssh-proxy.gif)
 
-The picture shows the final results: From a local terminal (e.g. my minibox), connecting to a CS server by simply typing `ssh granger1`. Read on for how to configure.
+The picture shows the final results: From a local terminal (e.g. my minibox), connecting to a course server by simply typing `ssh granger1`. Read on for how to configure.
 
 ### 1. Use key-based authentication in lieu of password 
 
-Applicable local environment: Linux, Windows (WSL)
+Applicable local environment: Linux, MacOS, & Windows (WSL)
 
 The pub key on your local machine is at `~/.ssh/id_rsa.pub`. Check out the file & its content. If it does not exist, generate a pub key by running `ssh-keygen`. 
 
@@ -60,7 +51,7 @@ Generating public/private rsa key pair.
 Enter file in which to save the key (/home/xzl/.ssh/id_rsa):
 ```
 
-Now, append your pubic key to both portal and granger1 (`~/.ssh/authorized_keys`). 
+Now, append your public key to both portal and granger1 (`~/.ssh/authorized_keys`). 
 
 Don't do this manually. Instead, do so by the command `ssh-copy-id`. For instance: 
 
@@ -72,7 +63,10 @@ $ ssh-copy-id xl6yq@portal.cs.virginia.edu
 # connect to "portal", it should no longer ask for password
 $ ssh xl6yq@portal.cs.virginia.edu
 
-# now we are on "portal", copy the pubkey to the cs server
+# now we are on "portal". generate a new pair of public/private keys, which will be used between portal and granger1 
+$ ssh-keygen
+
+# copy the new public key from portal to granger1
 $ ssh-copy-id xl6yq@granger1.cs.virginia.edu
 (... type in password ...)
 
@@ -80,21 +74,51 @@ $ ssh-copy-id xl6yq@granger1.cs.virginia.edu
 $ ssh xl6yq@granger1.cs.virginia.edu
 ```
 
-If things do not work, e.g. servers keep asking for passwords even after copying ssh key over, chances are that these keys do not have right file permissions on your local machine filesystem or on the server filesystem. A quick Googling can yield quick fixes. 
+**An alternative procedure (02/07/21):** Peiyi Yang, our TA, reported her successful configuration procedure as follows. 
 
-### 2. Connect to CS servers using one line of command
+Started from scratch. First edited the ssh config file on the local computer saying to jump through portal when going to granger1. Then ran ssh-copy-id id@portal and entered the password to install the local's pubkey on portal. Then from local, ran ssh-copy-id id@granger1 and entered the password to install the local's pubkey on granger1.
+
+So there is only one key pair. The pubkey is copied to portal and then to granger1. 
+
+### Troubleshooting: the server still asks for password? 
+
+Let's use granger1 as an example. 
+
+* On granger1, check the content of ~/.ssh/authorized_keys. You should see your public key saved there. For instance, mine is: 
 
 ```
-$ ssh -l USERNAME granger1.cs.virginia.edu -J portal.cs.virginia.edu
+$ cat ~/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkkCZ2PO7GdX5CBL26zcIFz4XgMiHSQjaU32evuidvMXsC
+ZExT9QHl3Ou00QfuagmfebugxB0aruGAsKmBxEBmlj0r1uAVCekYaIn8IPA5jynQnDRDdIABaZBWlsPx9jKo
+KQqLlKgdG4JziQOAr0HaUgr+oIXgRUq7V/W1OhV9SQVF+vcIy8vVwNdLBNdbw/GtU0oKb76yxfXOC/VZM7eZ
+xhovb/J450U5Op8tL/+Lg5x2sJKqR2juCFAicGbVNuXXazEDrXHgDQp+WQS8rYK4Zs95KqAsMfxvsFSbs8lf
+h0pIs+sozBNUt+1noJkcyLfxhzu0yGEsxMULHE/KdAst xl6yq@portal03                        
 ```
-The -J option is available with your local ssh client OpenSSH >= 7.3p1. See [here](https://unix.stackexchange.com/questions/423205/can-i-access-ssh-server-by-using-another-ssh-server-as-intermediary/423211#423211) for more details. For instance, my version: 
+
+"xl6yq@portal03" is the textual tag of the pubkey, indicating it is a pubkey generated on portal.cs
+
+* On granger1, check the permission of ~/.ssh. It should be: 
 
 ```
-$ ssh -V
-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3, OpenSSL 1.0.2n  7 Dec 2017
+$ ls -la ~ | grep .ssh
+drwx------ 
+```
+Check the permission of ~/.ssh/authorized_keys. It should be: 
+
+```
+$ ls -l ~/.ssh/authorized_keys
+-rw------- 
 ```
 
-### 3. Save connection info in SSH config
+If none of the above works, you can put ssh in the verbose mode to see what's going on. From `portal`, type
+```
+ssh -vv granger1.cs.virginia.edu
+```
+Explanation: -vv tells ssh to dump its interactions with granger1 on negotiating keys. As a reference, my output is [here](granger1-ssh-output.txt). At the end of the output, you can see granger1 accepts my key offered from portal. 
+
+**Note to Windows Users**: if you try to invoke ssh-copy-id that comes with Windows (the one you can invoke in PowerShell, not the one in WSL), there may be some caveats. See [here](https://www.chrisjhart.com/Windows-10-ssh-copy-id/). I would say just invoke ssh-copy-id in WSL. 
+
+### 2. Save connection info in SSH config
 
 Append the following to your ssh client configuration (`~/.ssh/config`). **Replace USERNAME with your actual username**: 
 
@@ -108,7 +132,17 @@ With the configuration, your local ssh client knows that when connecting  to hos
 ```
 $ ssh granger1
 ```
+### (FYI) a one-liner for connecting to course servers 
 
+```
+$ ssh -l USERNAME granger1.cs.virginia.edu -J portal.cs.virginia.edu
+```
+The -J option is available with your local ssh client OpenSSH >= 7.3p1. See [here](https://unix.stackexchange.com/questions/423205/can-i-access-ssh-server-by-using-another-ssh-server-as-intermediary/423211#423211) for more details. For instance, my version: 
+
+```
+$ ssh -V
+OpenSSH_7.6p1 Ubuntu-4ubuntu0.3, OpenSSL 1.0.2n  7 Dec 2017
+```
 ## Remote development with VSCode 
 
 Many students may prefer VSCode. Here is how to make it work for our kernel hacking. 
@@ -121,7 +155,7 @@ So we will use VSCode's official Remote.SSH extension. I do not recommend 3rd pa
 
 An official tutorial is [here](https://code.visualstudio.com/docs/remote/ssh). 
 
-tl;dr: VSCode will connect to the CS server (Linux) using SSH under the hood. To do so you install the "Remote development" [package](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) which will install the "Remote.SSH" extension for VSCode. 
+tl;dr: VSCode will connect to the course server (Linux) using SSH under the hood. To do so you install the "Remote development" [package](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) which will install the "Remote.SSH" extension for VSCode. 
 
 ![](vscode-remove-ssh.png)
 

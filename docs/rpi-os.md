@@ -4,8 +4,6 @@
 
 ## Objectives
 
-**Source code location: p1-kernel/src/lesson03**
-
 We will build a baremetal program that prints out messages, as driven by periodic interrupts from a hardware timer. 
 
 You will learn and experience with: 

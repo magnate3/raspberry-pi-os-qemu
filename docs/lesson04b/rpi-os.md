@@ -10,6 +10,8 @@ A minimum kernel that can schedule multiple tasks in a preemptive fashion. With 
 2. Understand context switch driven by interrupts, in particular switch to/from interrupt handlers
 3. Atomic kernel regions where preemption is disallowed 
 
+**Source code location: p1-kernel/src/lesson04b**
+
 ## Roadmap
 
 We will turn on timer interrupts. In the interrupt handler, our kernel invokes its scheduler to switch among runnable tasks. 

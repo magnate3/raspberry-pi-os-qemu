@@ -10,6 +10,18 @@ export PATH="$(pwd)/qemu/aarch64-softmmu:${PATH}"
 wget https://github.com/fxlin/p1-kernel/releases/download/exp1/kernel8.img
 ```
 
+Explanation: the `export` command adds the path to QEMU to the search paths, so that whenever you type `qemu-system-aarch64`, the shell can find it. You may want to add the line to `~/.bashrc` so it is executed whenever you log in to the server
+
+`echo export PATH="$(pwd)/aarch64-softmmu:${PATH}" >> ~/.bashrc`
+
+To test if the QEMU path is added to PATH.
+
+```
+$ whereis qemu-system-aarch64
+qemu-system-aarch64: /home/xzl/qemu/aarch64-softmmu/qemu-system-aarch64
+```
+Note the output path is just an example from my machine.
+ 
 ## Launch the kernel, free run
 
 ```
@@ -105,10 +117,10 @@ run-debug() {
 }
 ```
 
-To use: 
+To use: every time when you log in to the server and wants to develop the kernel
 
 ```
-# switch to dir where qemu tree is under qemu/
+# switch to dir where the qemu source directory is qemu/
 $ source env-qemu.sh
 
 # switch to dir where kernel8.img resides

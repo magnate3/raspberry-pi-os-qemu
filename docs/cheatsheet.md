@@ -13,12 +13,20 @@
      *  x9-x28: caller-saved registers. In general okay to use in your code
   * x29 (FP): frame pointer, pointing to the base of the current stack frame
   * x30 (LR): link register
-  
 * SP      Stack pointer                      
-  
 * PC     Program counter                     
 
-  
+Our [GDB customization](gdb.md) color-codes the registers. 
+
+White highlight (x0-x7): parameter/results; red background (x19-x29): callee saved. 
+
+(Green reg values: the values have changed since the last instruction)
+
+![](images/gdb-dash-aarch64-reg.png)
+
+
+
+
 
 ## Special purpose registers
 
