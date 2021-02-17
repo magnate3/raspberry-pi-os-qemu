@@ -195,17 +195,10 @@ The best documentation of gdb-dashboard seems from typing `help dashboard` in th
 >>> help dashboard expressions 
 ```
 
-#### Troubleshooting
+Cannot connect? See "troubleshooting" below.
 
-If GDB fails to connect, you can bypass the .gdbinit withi: 
+# Other enhancement (FYI)
 
-```
-gdb-multiarch -n
-```
-
-Then manually enter the commands (file, target remote, etc) to see what went wrong. 
-
-## Other enhancement (FYI)
 
 GEF (https://github.com/hugsy/gef) is also viable. Both GEF and GDB-dashboard: 
 
@@ -221,7 +214,24 @@ GEF screenshot (note the CPU flags it recognized)
 
 
 
-### Troubleshooting 
+### Troubleshooting
+
+**Cannot connect and need help?** Report the following:
+
+* Your QEMU version. i.e. the output of "qemu-system-aarch64  --version"
+* Have you tried other kernel binaries, e.g. from p1exp1? And the binaries provided by us? https://github.com/fxlin/p1-kernel/releases
+* The full commands you use to launch QEMU. Have you tried different port numbers? 
+* Launch GDB w/o loading .gdbinit: 
+
+```
+gdb-multiarch -n
+```
+
+Then enter GDB commands manually, e.g. load, target remote, etc. Does the problem persist? What's the output? 
+
+* Attach screenshot(s) of the above steps, if possible. 
+
+**WSL caveat:**
 
 "gdbserver: Target description specified unknown architecture “aarch64” 
 https://stackoverflow.com/questions/53524546/gdbserver-target-description-specified-unknown-architecture-aarch64 
