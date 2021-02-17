@@ -136,7 +136,13 @@ Contents of section .rodata:                                                    
 
 https://onlinedisassembler.com/odaweb/
 
-A nice web UI to disassemble an ELF file uploaded. 
+A nice web UI for disassembling ELF files
+
+Download kernel8.elf to your local machine, if you build it on the course server. Command line users: use the  `scp` command. VSCode users: right click on kernel8.elf->Download. 
+
+![image-20210209215952569](image-20210209215952569.png)
+
+Then, upload the file to ODA.
 
 ![image-20210201130120738](image-20210201130120738.png)
 *Figure above: upload file to ODA.* 

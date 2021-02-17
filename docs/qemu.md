@@ -21,7 +21,7 @@ $ whereis qemu-system-aarch64
 qemu-system-aarch64: /home/xzl/qemu/aarch64-softmmu/qemu-system-aarch64
 ```
 Note the output path is just an example from my machine.
- 
+
 ## Launch the kernel, free run
 
 ```
@@ -46,7 +46,7 @@ qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -
 Explanation: -S not starting the guest until you tell it to from gdb. 
 -s listening for an incoming connection from gdb on TCP port 1234
 
-The second form is useful in that if multiple students attempt to listen on tcp port 1234 on the same machine, all but one will fail. 
+The second form is useful in that if multiple students attempt to listen on tcp port 1234 on the same machine, all but one will fail. See [](g*Donna Chen*db.md) for details. 
 
 ## Launch the kernel with monitor 
 ```
@@ -114,6 +114,10 @@ run-mon() {
 
 run-debug() {
     qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -s -S
+}
+
+run-log() {
+	qemu-system-aarch64 -M raspi3 -kernel ./kernel8.img -serial null -serial stdio -d int -D qemu.log 
 }
 ```
 

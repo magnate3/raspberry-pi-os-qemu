@@ -1,6 +1,10 @@
 # A tiny, modern kernel for Raspberry Pi 3 
 
-**Get the code**: https://github.com/fxlin/p1-kernel
+**Get the code**: 
+
+```
+git clone https://github.com/fxlin/p1-kernel
+```
 
 A tiny kernel *incrementally built* for OS education. 
 

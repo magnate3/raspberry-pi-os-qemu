@@ -1,8 +1,10 @@
 # 0: Sharpen your tools                 
 
-## About the docs
+**Get the code**: 
 
-Be aware: it may contain URLs referring to the upstream git repo, which may slightly differ from what we use. 
+```
+git clone https://github.com/fxlin/p1-kernel
+```
 
 ### Terms
 
@@ -68,7 +70,7 @@ This is where you run the kernel code.
 
 | ![](figures/rpi3.jpg) |  ![](figures/uartcable.jpg)    |
 | ------------- | ---- |
-| **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) | **Required:** A USB to TTL serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable). Connection **inside** the dongle: black-GND; green-TXD; white-RXD; red-VCC. |
+| **Required:** An Rpi3 board (Model B or B+) [link](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) | **Required:** A USB-serial cable [Amazon](https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias%3Daps&field-keywords=usb+to+ttl+serial+cable&rh=i%3Aaps%2Ck%3Ausb+to+ttl+serial+cable). Connection **inside** the dongle: black-GND; green-TXD; white-RXD; red-VCC. |
 
 * **Required:** A micro SD card. The capacity can be humble (e.g. 4GB). The speed does not matter much. The one I used was $6.  [Rpi's official page about uSD](https://www.raspberrypi.org/documentation/installation/sd-cards.md)
 
@@ -87,15 +89,35 @@ Load the SD card with Raspbian OS. Follow the official [instructions](https://ww
 
 #### Plug in the serial cable
 
+```
+Rpi3 <-- a USB-serial cable ---> PC (running a temrinal emulator) 
+```
+
 After you get a serial cable, you need to test your connection. If you never did this before I recommend you to follow [this guide](https://cdn-learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-5-using-a-console-cable.pdf) It describes the process of connecting your Raspberry PI via a serial cable in great details. Basically, you run Raspberry's official OS to ensure the hardware setup is fine. 
 
 ![](https://cdn-learn.adafruit.com/assets/assets/000/035/695/small360/learn_raspberry_pi_piconsole_bb.png?1473736644)
+
+#### Configure the serial emulator on your PC
+
+Linux users: minicom recommended.
+
+```
+sudo minicom -b 115200 -o -D /dev/ttyUSB0 -C /tmp/minicom.log
+```
+
+Note: your PC may give different names to the USB-serial dongle, e.g. /dev/ttyUSB1. Find it out by looking at `dmesg` output. 
+
+Windows users (including WSL): PuTTY recommended. A sample configuration below. 
+
+![image-20210210120642726](image-20210210120642726.png)
+
+Note: your PC may give different names to the USB-serial dongle, e.g. COM4. Find it out by looking at Windows Device Manager. 
 
 #### Powering up RPi3
 
 We recommend you power Rpi3 through its micro USB port. Perhaps use a flip switch on the other side of the USB power for power cycling Rpi3. The guide above also describes how to power your Raspberry Pi using a serial cable. RPi OS works fine with such kind of setup, however, in this case, you need to run your terminal emulator right after you plug in the cable. Check [this](https://github.com/s-matyukevich/raspberry-pi-os/issues/2) issue for details.
 
-``` 
+```
 Rpi3 <-- micro USB ---> PC
 Rpi3 <-- micro USB ---> Wall charger
 ```
@@ -147,7 +169,6 @@ cd raspi3-tutorial
 git checkout b026449
 cd 05_uart0
 make 
-qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio
 ```
 
 **Note**: the repo above (raspi3-tutorial.git) is NOT our project repo. It's someone's code for testing rpi3 hardware. We are just using for testing ONLY. 
@@ -179,7 +200,7 @@ sudo apt install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
 Grab the QEMU source.  Our QEMU is based on upstream v4.2 **with custom aarch64 debugging support.** 
 
 ```
-git clone https://github.com/fxlin/qemu-cs4414.git
+git clone https://github.com/fxlin/qemu-cs4414.git qemu
 cd qemu
 ./configure --target-list=aarch64-softmmu
 make -j`nproc`
@@ -231,3 +252,7 @@ On Windows (WSL)
 ![](test-qemu-wsl.gif)
 
 Move to [the QEMU cheatsheet](../qemu.md). 
+
+```
+
+```

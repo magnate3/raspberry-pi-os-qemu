@@ -9,7 +9,7 @@ We will build a minimum kernel that can schedule multiple cooperative tasks.
 ## Roadmap
 From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
 
-We will intentionally leave out interrupts, i.e. **timer interrupts are OFF**. Tasks must voluntarily yield to each other. As a result, we focus on scheduling and task switch and defer treatment of interrupt handling to upcoming experiment. . 
+We will intentionally leave out interrupts, i.e. **timer interrupts are OFF**. Tasks must voluntarily yield to each other. As a result, this experiment focuses on scheduling and task switch. We defer interrupt handling to upcoming experiment. . 
 
 We will implement: 
 
@@ -24,11 +24,11 @@ We will implement:
 ## Key data structures
 
 ![](sched/Slide1.png) 
-*An array of pointers to task_structs of tasks* 
+*Figure above: an array of pointers to task_structs of tasks* 
 
 ### task_struct
 
-To manage tasks, the first thing we should do is to create a struct that describes a task. Linux has such a struct and it is called `task_struct`  (in Linux both thread and processes are just different types of tasks; the difference is in how they share address spaces). As we are mostly mimicking Linux implementation, we are going to do the same. It looks like the following (in sched.h).
+The first thing is to create a struct that describes a task. Linux has such a struct and it is called `task_struct`  (in Linux both thread and processes are just different types of tasks; the difference is in how they share address spaces). As we are mostly mimicking Linux implementation, we are going to do the same. It looks like the following (`sched.h`).
 
 ```
 struct cpu_context {
@@ -58,31 +58,25 @@ struct task_struct {
 
 This struct has the following members:
 
-* `cpu_context` This is an embedded structure that contains values of all registers that might be different between the tasks, that are being switched. 
-  * Why don't we save all registers, but only registers `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`). Because task switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. 
-  * So, from the point of view of the task that is being switched, it just calls `cpu_switch_to` function and it returns after some (potentially long) time. The "switched from" task doesn't notice that another task happens to runs during this period.  
-  * Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the callee, so the caller must not assume that the values of those registers will survive after a function call. That's why it doesn't make sense to save `x0 - x18` registers.
-* `state` This is the state of the currently running task (note: NOT CPU state which is an orthogonal concept). For tasks that are just doing CPU work but not IO, the state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). For now, this is the only state supported by our kernel. 
-  * Later we add a few additional states. For example, a task that is waiting for an interrupt should be moved to a different state, because it doesn't make sense to awake the task while the required interrupt hasn't yet happened.
-* `counter` This field is used to determine how long the current task has been running. `counter` decreases by 1 each timer tick and when it reaches 0 another task is scheduled. This supports our simple scheduling algorithm.
-* `priority`  When a new task is scheduled its `priority` is copied to `counter`. By setting tasks priority, we can regulate the amount of processor time that the task gets relative to other tasks.
-* `preempt_count` If this field has a non-zero value it is an indicator that right now the current task is executing some critical function that must not be interrupted (for example, it runs the scheduling function.). If timer tick occurs at such time it is ignored and rescheduling is not triggered.
+* `cpu_context` This is a struct that contains values of all registers that might be different between the tasks.
+  * Why don't we save all registers, but only `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`). Because task switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. 
+  * From the point of view of the task that is being scheduled out (i.e. the "switched-from" task), it just calls `cpu_switch_to` function and it returns after some (potentially long) time. The "switched from" task is unaware of that another task (i.e. the "switched-to" task) happens to runs during this period.  
+  * Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the callee (i.e. `cpu_switch_to()` in our case). Hence, the kernel doesn't have to save the contents of `x0 - x18` for the caller (the "switched-from" task). 
+* `state` This is the state of the currently running task (NOT PSTATE -- an orthogonal concept). For a task just doing CPU work but not IO, the task state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). For now, this is the only state supported by our kernel. 
+  * Later we add a few additional states. For example, a task waiting for an interrupt should be in a different state, because it doesn't make sense to schedule the task when it is not ready to run yet. 
+* `counter` is used to determine how long the current task has been running. `counter` decreases by 1 each timer tick. When it reaches 0, the kernel will attempt to schedule another task. This supports our simple scheduling algorithm.
+* `priority`  When the kernel schedules a new task, the kernel copies the task's  `priority` value `counter`. In this way, the kernel can regulate the amount of processor time the task gets relative to other tasks.
+* `preempt_count` A flag. A non-zero value means that the current task is executing in a critical code region that cannot be interrupted, e.g. by switching to another task. Any timer tick should be ignored and not triggering rescheduling. 
 
 After the kernel startup, there is only one task running: the one that runs kernel_main(). It is called "init task". Before the scheduler is enabled, we must fill `task_struct` of the init task. This is done in `INIT_TASK`.
 
-All `task_struct`s are stored in `task` (sched.c) array. This array has only 64 slots - that is the maximum number of simultaneous tasks that we can have in the kernel. It won't suit a production OS, but it is ok for our goals.
+All `task_struct`s are stored in `task` (sched.c) array. This array has only 64 slots - that is the maximum number of simultaneous tasks the kernel can have. It won't suit a production OS, but it is ok for our goals.
 
-An important global variable is `current` (sched.c) that always points to `task_struct` of currently executing task. Both `current` and `task` array are initially set to hold a pointer to the init task. There is also a global variable called [nr_tasks](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L8) - it contains the number of currently running tasks in the system.
+An important global variable is `current` (sched.c) that always points to `task_struct` of currently executing task. Both `current` and `task` array are initially set to hold a pointer to the init task. There is also a global variable `nr_task` - it contains the number of currently running tasks in the system.
 
-Those are all structures and global variables needed to implement the scheduler. In the description of the `task_struct` I already briefly mentioned some aspects of how scheduling works, because it is impossible to understand the meaning of a particular `task_struct` field without understanding how this field is used. 
-
-Now examine the scheduling algorithm in much more details and we will start with the `kernel_main` function.
-
-## Functions
+## Task switch
 
 ### Preparing task_structs (kernel.c)
-
-How to prove that the scheduler actually works? 
 
 ```
 void kernel_main(void)
@@ -108,14 +102,17 @@ void kernel_main(void)
 }
 ```
 
-There are a few important things about this code.
+1. A new function `copy_process` is introduced. `copy_process` takes 2 arguments: a function to execute in a new thread and an argument passed to this function. `copy_process` allocates a new `task_struct`  and makes it available for the scheduler.
 
-1. New function [copy_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/fork.c#L5) is introduced. `copy_process` takes 2 arguments: a function to execute in a new thread and an argument that need to be passed to this function. `copy_process` allocates a new `task_struct`  and makes it available for the scheduler.
-1. Another new function for us is called [schedule](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.c#L21). This is the core scheduler function: it checks whether there is a new task that needs to preempt the current one. In cooperative scheduling, a task voluntarily calls `schedule` if it doesn't have any work to do at the moment. Spoiler: for preemptive multitasking, `schedule` is also called from the timer interrupt handler.
+1. Another new function `schedule`. This is the core scheduler function: it checks whether there is a new task that needs to preempt the current one. In cooperative scheduling, a task voluntarily calls `schedule` if it doesn't have any work to do at the moment. 
+
+   >  For preemptive multitasking, `schedule` is also called from the timer interrupt handler.
 
 > Try your self with QEMU: set a breakpoint at copy_process & launch the kernel. Examine task_struct with `print *p`. Examine the value of cpu_context.[pc|sp|fn|arg]. 
 
-We are calling `copy_process` 2 times, each time passing a pointer to the [process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/kernel.c#L9) function as the first argument. `process` function is very simple.
+We are calling `copy_process` 2 times, each time passing a pointer to the process function as the first argument.
+
+ `process` function is very simple.
 
 ```
 void process(char *array)
@@ -130,7 +127,7 @@ void process(char *array)
 }
 ```
 
-It just keeps printing on the screen characters from the array, that is passed as an argument The first time it is called with the argument "12345" and second time the argument is "abcde". After printing out a string, a task yields to others by calling `schedule()`. If our scheduler implementation is correct, we should see on the output from both threads.
+It just keeps printing characters from the array, which is passed as an argument. Task 1 is created with the argument "12345" and task 2 is with the argument "abcde". After printing out a string, a task yields to others by calling `schedule()`. If our scheduler implementation is correct, both threads will take turns to print strings. 
 
 ### Switching tasks (sched.c & sched.S)
 
@@ -147,7 +144,7 @@ void switch_to(struct task_struct * next)
 }
 ```
 
-Here we check that next process is not the same as the current, and if not, `current` variable is updated. The actual work is redirected to [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S) function. It is in assembly as it manipulates registers. 
+If the "next" process is not the same as the "current",  the kernel updates `current`. The `cpu_switch_to` function is where the real context switch happens. To manipulates registers, it is in assembly. 
 
 ```
 .globl cpu_switch_to
@@ -174,14 +171,14 @@ cpu_switch_to:
     ret
 ```
 
-This is the place where the real context switch happens. Let's examine it line by line.
+Let's examine it line by line.
 
 ```
     mov    x10, #THREAD_CPU_CONTEXT
     add    x8, x0, x10
 ```
 
-`THREAD_CPU_CONTEXT` constant contains offset of the `cpu_context` structure in the `task_struct`. `x0` contains a pointer to the first argument, which is the current `task_struct` (i.e. the "switch_from" task).  After the copied 2 lines are executed, `x8` will contain a pointer to the current `cpu_context`.
+`THREAD_CPU_CONTEXT` constant contains offset of the `cpu_context` structure in the `task_struct` (the offset is 0 in the current implementation). `x0` contains a pointer to the first argument, which is the current `task_struct` (i.e. the "switch-from" task).  After the copied 2 lines are executed, `x8` will contain a pointer to the current `cpu_context`.
 
 ```
     mov    x9, sp
@@ -196,7 +193,7 @@ This is the place where the real context switch happens. Let's examine it line b
 
 ![](sched/Slide2.PNG)
 
-*Figure above: Registers are being saved to task_struct.context*
+*The figure above: Registers are being saved to task_struct.context*
 
 Next all callee-saved registers are stored in the order, in which they are defined in `cpu_context` structure. The current stack pointer is saved as `cpu_context.sp` and `x29` is saved as `cpu_context.fp` (frame pointer).
 
@@ -208,7 +205,7 @@ Now we calculate the address of the next task's `cpu_context`:
     add    x8, x1, x10
 ```
 
-This a cute hack. `x10` contains an offset of the `cpu_context` structure inside `task_struct`, `x1` is a pointer to the next `task_struct`, so `x8` will contain a pointer to the next `cpu_context`.
+This a cute hack. `x10` contains `THREAD_CPU_CONTEXT` , the offset of the `cpu_context` structure inside `task_struct`. `x1` is a pointer to the next `task_struct`, so `x8` will contain a pointer to the next `cpu_context`.
 
 Now, restore the CPU context of "switch_to" task from memory to CPU regs. A mirror procedure. 
 
@@ -224,13 +221,13 @@ Now, restore the CPU context of "switch_to" task from memory to CPU regs. A mirr
     ret
 ```
 
-After `ret`, kernel returns to the location pointed to by the link register (`x30`). If we are switching to a task for the first time, this will be [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L148) function. More on it below. In all other cases this will be the location, previously saved in the `cpu_context.pc` by the `cpu_switch_to` function. Think: which instruction does it point to? 
+The `ret` instruction will jump to the location pointed to by the link register (`x30`). If we are switching to a task for the first time, this will be the beginning of the `ret_from_fork` function. More on that below. In all other cases this will be the location previously saved in the `cpu_context.pc` by the `cpu_switch_to` function. Think: which instruction does it point to? 
 
 ### Launching a new task
 
-After seeing task switch, new task creation starts to make more sense. It is implemented in [copy_process](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/fork.c#L5) function.
+New task creation is implemented in the copy_process function.
 
-Keep in mind: after `copy_process` finishes execution, no context switch happens. The function only prepares new `task_struct` and adds it to the `task` array — this task will be executed only after `schedule` function is called.
+Keep in mind: after `copy_process` finishes execution, no context switch happens yet. The function only prepares new `task_struct` and adds it to the `task` array — this task will be executed only after `schedule` function is called.
 
 ```
 int copy_process(unsigned long fn, unsigned long arg)
@@ -254,7 +251,7 @@ int copy_process(unsigned long fn, unsigned long arg)
 }
 ```
 
-Now, we are going to examine it in details.
+We examine it in details.
 
 ```
     struct task_struct *p;
@@ -268,7 +265,7 @@ The function starts with allocating a pointer for the new task. As interrupts ar
         return 1;
 ```
 
-Next, a new page is allocated. At the bottom of this page, we are putting the `task_struct` for the newly created task. The rest of this page will be used as the task stack. A few lines below, `context.sp` is set as `p + THREAD_SIZE`. THREAD_SIZE is defined as 4KB. It is the total amount of memory for a task. The name, again, is following the Linux kernel convention. 
+Next, a new page is allocated. At the bottom of this page, we are putting the `task_struct` for the newly created task. The rest of this page will be used as the task stack. A few lines below, `context.sp` is set as `p + THREAD_SIZE`. THREAD_SIZE is defined as 4KB. It is the total amount of kernel memory for a task. The name, again, is following the Linux kernel convention. 
 
 |                    ![](sched/Slide3.png)                     |
 | :----------------------------------------------------------: |
@@ -289,7 +286,7 @@ After the `task_struct` is allocated, we can initialize its properties.  Priorit
     p->cpu_context.sp = (unsigned long)p + THREAD_SIZE;
 ```
 
-This is the most important part of the function. Here `cpu_context` is initialized. The stack pointer is set to the top of the newly allocated memory page. `pc`  is set to the [ret_from_fork](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/entry.S#L146) function, and we need to look at this function now in order to understand why the rest of the `cpu_context` registers are initialized in the way they are.
+This is the most important part of the function. Here `cpu_context` is initialized. The stack pointer is set to the top of the newly allocated memory page (see the figure above). `pc`  is set to the ret_from_fork function. Details below. 
 
 ### ret_from_fork (entry.S)
 
@@ -305,15 +302,13 @@ ret_from_fork:
     blr    x19         //should never return
 ```
 
-Where do `x19` and `x20` come from? See code `copy_process` above, which saves `fn` (the process's main function) and `arg` (the argument passed to the process) to`task_struct`. When switching to P, the kernel restores `fn` and `arg` from `task_struct` to `x19` and `x20`. 
-
-As a result, `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`. 
+What are the initial values of `x19` and `x20`? See code `copy_process` above, which saves `fn` (the process's main function) and `arg` (the argument passed to the process) to`task_struct.x19` and `x20`. When switching to P, the kernel restores `fn` and `arg` from `task_struct` to `x19` and `x20`. And here we are:  `ret_from_fork` calls the function stored in `x19` register with the argument stored in `x20`. 
 
 > :wrench:Try your self with QEMU+GDB: set a breakpoint at ret_from_fork, launch the kernel, and single step into the new process function. 
 
-### Aside: Memory allocation
+## Memory allocation
 
-Each task in the system should have its dedicated stack. That's why when creating a new task we must have a way to allocate memory. For now, our memory allocator is extremely primitive. (The implementation can be found in [mm.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/mm.c) file)
+Each task in the system should have its dedicated stack. That's why when creating a new task we must have a way to allocate memory. For now, our memory allocator is extremely primitive. (The implementation can be found in mm.c file)
 
 ```
 static unsigned short mem_map [ PAGING_PAGES ] = {0,};
@@ -338,14 +333,14 @@ void free_page(unsigned long p){
 
 The allocator can work only with memory pages (each page is 4 KB in size). There is an array called `mem_map` that for each page in the system holds its status: whether it is allocated or free. Whenever we need to allocate a new page, we just loop through this array and return the first free page. This implementation is based on 2 assumptions:
 
-1. We know the total amount of memory in the system. It is `1 GB - 1 MB` (the last megabyte of memory is reserved for device registers.). This value is stored in the [HIGH_MEMORY](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/mm.h#L14) constant.
-1. First 4 MB of memory are reserved for the kernel image and init task stack. This value is stored in [LOW_MEMORY](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/mm.h#L13) constant. All memory allocations start right after this point.
+1. We know the total amount of memory in the system. It is `1 GB - 1 MB` (the last megabyte of memory is reserved for device registers.). This value is stored in the HIGH_MEMORY constant.
+1. First 4 MB of memory are reserved for the kernel image and init task stack. This value is stored in the LOW_MEMORY constant. All memory allocations start right after this point.
 
 > Note: even with QEMU our kernel must start from 0x80000 (512KB), the above assumptions are good as there's still plenty room in 512KB -- LOW_MEMORY for our tiny kernel.
 
-### The scheduler
+## The scheduler
 
-Finally, we are ready to look at the scheduler algorithm. I almost precisely copied this algorithm from the first release of the Linux kernel. You can find the original version [here](https://github.com/zavg/linux-0.01/blob/master/kernel/sched.c#L68).
+Finally, we are ready to look at the scheduler algorithm. We almost precisely copied this algorithm from the first release of the Linux kernel. 
 
 ```
 void _schedule(void)
@@ -390,6 +385,6 @@ The simple algorithm works like the following:
 
 We will augment the scheduling algorithm for preemptive multitasking later. 
 
-### Conclusion
+## Conclusion
 
 We have seen important nuts & bolts of multitasking. The subsequent experiment will enable task preemption. We will show a detailed workflow of context switch there. 

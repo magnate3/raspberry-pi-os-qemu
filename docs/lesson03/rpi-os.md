@@ -319,8 +319,6 @@ void enable_interrupt_controller()
 
 **To summarize**: we have to program three places in order to receive the timer interrupts: the timer device, the per-core interrupt controller, and the core itself (DAIF). 
 
-<!----- need a figure --->
-
 #### Handing timer interrupts
 
 The kernel gets an irq. The kernel check if it comes from the timer; if so, the kernel sets the timer for firing the next interrupt. 
@@ -350,7 +348,7 @@ gen_timer_reset:
     ret
 ```
 
-### Timers on Rpi3
+### FYI: other timers on Rpi3
 
 There are other timers on Rpi3 which you may see from various online blogs/tutorials/forums. The information can be very confusing. The naming of timers does NOT help. I list them below together with Arm generic timers described above. I suggest you stay away from other timers because the experience will not be as useful. 
 

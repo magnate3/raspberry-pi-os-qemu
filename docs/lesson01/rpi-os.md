@@ -339,9 +339,9 @@ UART1/Mini UART: easier to program; limited performance/functionalities. That's 
 
 UART0/PL011: richer functions; higher speed. Yet one needs to configure the board clock by talking to the GPU firmware. We won't do that. see [Example code](https://github.com/bztsrc/raspi3-tutorial/tree/master/05_uart0) if you are interested. 
 
-<!--- A Raspberry Pi has two UARTs: Mini UART and PL011 UART. In this tutorial, we are going to work only with the first one, because it is simpler. There is, however, an optional [exercise](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/docs/lesson01/exercises.md) that shows how to work with PL011 UART. -->
+**Both UARTs can be mapped to the same physical pins** by setting the GPFSEL1 register. See the GPIO function diagram below. 
 
-The above information is enough. More about Raspberry Pi UARTs: see the [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
+That's enough to know about Rpi UARTs. More:  [official web page](https://www.raspberrypi.org/documentation/configuration/uart.md). 
 
 ### GPIO
 
@@ -597,9 +597,15 @@ disable_commandline_tags=1
 **Run**
 
 1. Copy the generated `kernel8.img` file to the `boot` partition of your Raspberry Pi flash card and delete `kernel7.img` as well as any other `kernel*.img` files on your SD card. Make sure you left all other files in the boot partition untouched (see [43](https://github.com/s-matyukevich/raspberry-pi-os/issues/43) and [158](https://github.com/s-matyukevich/raspberry-pi-os/issues/158) issues for details). 
+
+   **Update** (2/10/21): students reported that UART1 stops to work with the newest Rpi3 firmware (either extracted from Raspbian OS or from the upstream github repo). The symptom: no "helloworld" is printed, while UART1 seems echoing fine. UART0 seems unaffected. My guess: it has something to do with the firmware's new device tree feature? **Action:** use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3. 
+
 1. Modify the `config.txt` file as described above.
+
 1. Connect the USB-to-TTL serial cable as described in the [Prerequisites](../lesson00/rpi-os.md).
+
 1. Power on your Raspberry Pi.
+
 1. Open your terminal emulator. You should be able to see the `Hello, world!` message there.
 
 **Aside (optional): prepare the SD card from scratch (w/o Raspbian)**
@@ -610,12 +616,21 @@ The steps above assume that you have Raspbian installed on your SD card. It is a
     * Use an MBR partition table
     * Format the boot partition as FAT32
     > The card should be formatted exactly in the same way as it is required to install Raspbian. Check `HOW TO FORMAT AN SD CARD AS FAT` section in the [official documenation](https://www.raspberrypi.org/documentation/installation/noobs.md) for more information.
+    
 1. Copy the following files to the card:
+   
     * [bootcode.bin](https://github.com/raspberrypi/firmware/blob/master/boot/bootcode.bin) This is the GPU bootloader, it contains the GPU code to start the GPU and load the GPU firmware. 
+    
     * [start.elf](https://github.com/raspberrypi/firmware/blob/master/boot/start.elf) This is the GPU firmware. It reads `config.txt` and enables the GPU to load and run ARM specific user code from `kernel8.img`
+    
+      **Update** (2/10/21): UART1 is broken by these upstream firmware for unknown reason. Use older firmware provided by us: https://github.com/fxlin/p1-kernel/releases/tag/exp1-rpi3. 
+    
 1. Copy `kernel8.img` and `config.txt` files. 
+
 1. Connect the USB-to-TTL serial cable.
+
 1. Power on your Raspberry Pi.
+
 1. Use your terminal emulator to connect to the RPi OS. 
 
 Unfortunately, all Raspberry Pi firmware files are closed-sourced and undocumented. For more information about the Raspberry Pi startup sequence, you can refer to some unofficial sources, like [this](https://raspberrypi.stackexchange.com/questions/10442/what-is-the-boot-sequence) StackExchange question or [this](https://github.com/DieterReuter/workshop-raspberrypi-64bit-os/blob/master/part1-bootloader.md) Github repository.

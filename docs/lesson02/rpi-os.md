@@ -68,7 +68,7 @@ Let's not reinvent the wheel and use one of  [existing printf implementations](h
 
 ### QEMU + GDB debugging
 
-GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. A quick note is [here](gdb.md).
+Reminder: GDB allows you to do single step, etc. It may help understand/debug specific instructions. You can find extensive information online. 
 
 ## Code Walkthrough
 
