@@ -176,6 +176,12 @@ The best documentation of gdb-dashboard seems from typing `help dashboard` in th
 >>> help dashboard expressions 
 ```
 
+Cannot connect and need help? Report the following:
+* Your QEMU version. i.e. the output of "qemu-system-aarch64  --version"
+* The full command you use to launch QEMU, in particular the port number. 
+* The output if you launch GDB without .gdbinit and manually enter the commands. 
+* Screenshot(s) of the above steps.  
+
 # Other enhancement (FYI)
 
 GEF (https://github.com/hugsy/gef) is also viable. Both GEF and GDB-dashboard: 
