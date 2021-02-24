@@ -6,10 +6,11 @@
 
 //unsigned int interval = 9600000;
 #ifdef USE_QEMU
-unsigned int interval = (1 << 26); // xzl: around 1 sec
+//unsigned int interval = (1 << 26); // xzl: around 1 sec
+unsigned int interval = (1 << 26) / 30; 
 #else
 // unsigned int interval = 1 * 1000 * 1000; // xzl: around 1 sec
-unsigned int interval = 30 * 1000; // xzl: around 1 sec
+unsigned int interval = 30 * 1000; 
 #endif
 
 unsigned int curVal = 0;

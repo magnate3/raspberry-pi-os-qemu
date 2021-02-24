@@ -26,7 +26,7 @@
 // #include "uart.h"
 #include "printf.h"
 #include "mbox.h"
-#include "homer.h"
+// #include "homer.h"
 //#include "zoom_bg_logo_l2-720p.h"
 #include "zoom_bg_logo_l2-1024x768.h"
 // #include "tv-test-screen-1024x768.h"
@@ -41,6 +41,9 @@ unsigned int height = 600;
 
 unsigned int vwidth = 1024;
 unsigned int vheight = 768;
+
+static unsigned int offsetx = 0; 
+unsigned int offsety = 0; 
 
 /**
  * Set screen resolution to 1024x768
@@ -73,8 +76,8 @@ void lfb_init()
     mbox[12] = 0x48009; //set virt offset
     mbox[13] = 8;
     mbox[14] = 8;
-    mbox[15] =  100;           //FrameBufferInfo.x_offset
-    mbox[16] =  0;           //FrameBufferInfo.y.offset    
+    mbox[15] =  offsetx;           //FrameBufferInfo.x_offset
+    mbox[16] =  offsety;           //FrameBufferInfo.y.offset    
     // mbox[15] = 400; // 0;           //FrameBufferInfo.x_offset
     // mbox[16] = 400; // 0;           //FrameBufferInfo.y.offset
 
@@ -86,7 +89,7 @@ void lfb_init()
     mbox[21] = 0x48006; //set pixel order
     mbox[22] = 4;
     mbox[23] = 4;
-    mbox[24] = 1;           //RGB, not BGR preferably
+    mbox[24] = 1;           //1=RGB, not 0=BGR preferably
 
     mbox[25] = 0x40001; //get framebuffer, gets alignment on request
     mbox[26] = 8;
@@ -203,19 +206,44 @@ void lfb_update()
 }
 #endif
 
-static unsigned int offsetx = 0; 
-unsigned int offsety = 0; 
-
 /* return: 0 on success */
 int lfb_update2()
 {
     offsetx += offset_delta; 
     offsety += offset_delta; 
 
+#if 0 // works, but does not look good
     if (offsetx + width > vwidth)
         offsetx = 0; 
     if (offsety + height > vheight)
         offsety = 0; 
+#endif         
+
+#if 1
+    if (offsetx + width > vwidth || offsety + height > vheight) 
+        offsetx = offsety = 0; 
+#endif
+
+    /* NB: these requests belong to one transaction. all or nothing */
+
+#if 0
+    mbox[0] = 12*4;
+    mbox[1] = MBOX_REQUEST;
+
+    //set virt offset
+    mbox[2] = 0x48009; 
+    mbox[3] = 8;
+    mbox[4] = 8;
+    mbox[5] =  offsetx;           //FrameBufferInfo.x_offset
+    mbox[6] =  offsety;           //FrameBufferInfo.y.offset    
+
+    mbox[7] = 0x48005; 
+    mbox[8] = 4;
+    mbox[9] = 4;
+    mbox[10] = 32;           
+
+    mbox[11] = MBOX_TAG_LAST;
+#endif
 
     mbox[0] = 8*4;
     mbox[1] = MBOX_REQUEST;
@@ -226,18 +254,18 @@ int lfb_update2()
     mbox[4] = 8;
     mbox[5] =  offsetx;           //FrameBufferInfo.x_offset
     mbox[6] =  offsety;           //FrameBufferInfo.y.offset    
-    // mbox[15] = 400; // 0;           //FrameBufferInfo.x_offset
-    // mbox[16] = 400; // 0;           //FrameBufferInfo.y.offset
+
     mbox[7] = MBOX_TAG_LAST;
 
     if(mbox_call(MBOX_CH_PROP)) {
-        printf("offsetx %u offsety %u\r\n", mbox[5], mbox[6]);
+        printf("to set: offsetx %u offsety %u res: offsetx %u offsety %u\r\n", offsetx, offsety, mbox[5], mbox[6]);
         if (mbox[5] != offsetx || mbox[6] != offsety) {
             printf("failed to set. reached screen boundaries?\n\r");
             return -1; 
         }
         return 0; 
-    } 
+    } else
+        printf("mbox call failed\n\r");
     return -1; 
 }
 
