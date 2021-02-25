@@ -45,11 +45,11 @@ void kernel_main(void)
 				if ((offsety += 50) > vheight)
 					offsety = 0;
 				printf("set offsety = %u\n\r", offsety);
-				lfb_update2();  
+				lfb_update();  
 			break;
 		}
 		delay(50 * 5000);
-		// printf("lfb_update2\n\r");
-		// lfb_update2();
+		// printf("lfb_update\n\r");
+		// lfb_update();
 	}	
 }

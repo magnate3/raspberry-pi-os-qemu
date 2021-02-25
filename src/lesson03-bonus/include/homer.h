@@ -1,7 +1,7 @@
 /*  GIMP header image file format (RGB)  */
 
-static unsigned int homer_width = 96;
-static unsigned int homer_height = 64;
+static unsigned int img_width = 96;
+static unsigned int img_height = 64;
 
 /*  Call this macro repeatedly.  After each use, the pixel data can be extracted  */
 
@@ -11,7 +11,7 @@ pixel[1] = ((((data[1] - 33) & 0xF) << 4) | ((data[2] - 33) >> 2)); \
 pixel[2] = ((((data[2] - 33) & 0x3) << 6) | ((data[3] - 33))); \
 data += 4; \
 }
-static char *homer_data =
+static char *img_data =
 	"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 	"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 	"!!!!!!!!!!!!!!!!!1)$!Q5*$2=C$\"9B#!U5%BUM'3R((#Z-%S%T#!Y7!A-&!!!!"

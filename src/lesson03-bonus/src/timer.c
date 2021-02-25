@@ -52,5 +52,5 @@ void handle_generic_timer_irq( void )
 {
 	// printf("Timer interrupt received. next in %u ticks\n\r", interval);
 	gen_timer_reset(interval);
-	lfb_update2(); // refresh fb
+	lfb_update(); // refresh fb
 }

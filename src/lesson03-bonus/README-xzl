@@ -1,2 +1,19 @@
+## To build
+
+
+```
+# export USE_QEMU=1 # one time
+make clean
+make
+```
+Or 
+
+```
+# export USE_QEMU=   # one time
+# make clean
+make 
+```
+
 derived from "raspi3-tutorial/09_framebuffer". See LICENSE
+
 

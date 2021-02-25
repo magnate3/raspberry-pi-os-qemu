@@ -26,7 +26,7 @@
 void lfb_init();
 void lfb_showpicture();
 // void lfb_update(); 
-int lfb_update2(void); 
+int lfb_update(void); 
 
 extern unsigned int offset_delta; 
 extern unsigned int width, height, vwidth, vheight, offsety; 
