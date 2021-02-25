@@ -1,9 +1,24 @@
+# export USE_QEMU=1
+# make
+
+# export USE_QEMU=
+# make
+
 ARMGNU ?= aarch64-linux-gnu
 
-COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0
-ASMOPS = -Iinclude  -g
+COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 
+ASMOPS = -Iinclude  -g 
 
-BUILD_DIR = build
+ifeq ($(USE_QEMU),1)
+	COPS += -DUSE_QEMU=1
+	ASMOPS += -DUSE_QEMU=1
+	START_ADDR = 0x80000
+	BUILD_DIR = build-qemu
+else
+	BUILD_DIR = build-rpi
+	START_ADDR = 0x0
+endif
+
 SRC_DIR = src
 
 all : kernel8.img
@@ -26,6 +41,10 @@ OBJ_FILES += $(ASM_FILES:$(SRC_DIR)/%.S=$(BUILD_DIR)/%_s.o)
 DEP_FILES = $(OBJ_FILES:%.o=%.d)
 -include $(DEP_FILES)
 
-kernel8.img: $(SRC_DIR)/linker.ld $(OBJ_FILES)
-	$(ARMGNU)-ld -T $(SRC_DIR)/linker.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
+$(BUILD_DIR)/linker.ld : $(SRC_DIR)/linker.in.ld
+	mkdir -p $(@D)
+	$(ARMGNU)-gcc -E -DSTART_ADDR=$(START_ADDR) -x c $^ | grep -v '^#' > $@	
+
+kernel8.img: $(BUILD_DIR)/linker.ld $(OBJ_FILES)
+	$(ARMGNU)-ld -T $(BUILD_DIR)/linker.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
 	$(ARMGNU)-objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img

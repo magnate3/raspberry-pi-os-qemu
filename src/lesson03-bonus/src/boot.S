@@ -21,7 +21,7 @@ master:
 	ldr	x0, =HCR_VALUE  	// Hypervisor Configuration (EL2) 
 	msr	hcr_el2, x0  
 
-#ifdef USE_QEMU 		// xzl: qemu boots from EL2. cannot do things to EL3			
+#ifdef USE_QEMU 		// xzl: qemu boots from EL2. cannot do things to EL3	
 	ldr	x0, =SPSR_VALUE	
 	msr	spsr_el2, x0
 
