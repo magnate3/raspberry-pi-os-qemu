@@ -20,12 +20,10 @@ NOTE: this experiment enables running user/kernel at different ELs. Yet, it does
 
 ## Roadmap
 
-We will: 
-
 1. Implement the syscall mechanism, in particular switch between EL0 and EL1 (you have already done something similar in previous experiments!)
 2. Implement two mechanisms that put user tasks to EL0: 
-   1. moving a kernel task EL1 -> EL0
-   2. forking an existing user task at EL0
+   1. forking an existing user task at EL0
+   2. moving a kernel task EL1 -> EL0
 
 ## Syscall implementation
 
@@ -40,7 +38,7 @@ We have 4 simple syscalls:
 1. `malloc` allocates a memory page for a user process. There is no analog of this syscall in Linux (and I think in any other OS as well.) The only reason that we have no virtual memory yet, and all user processes work with physical memory. Each process needs a way to figure out which memory page can be used. `malloc` syscall return pointer to the newly allocated page or -1 in case of an error.
 1. `exit` Each process must call this syscall after it finishes execution. It will do cleanup.
 
-All syscalls are defined in the [sys.c](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/sys.c) file. There is also an array [sys_call_table](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/sys.c) that contains pointers to all syscall handlers. Each syscall has a "syscall number" — this is just an index in the `sys_call_table` array. All syscall numbers are defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/sys.h#L6) — they are used by the assembler code to look up syscall. 
+All syscalls are defined in `sys.c`. There is also an array [sys_call_table](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/src/sys.c) that contains pointers to all syscall handlers. Each syscall has a "syscall number" — this is just an index in the `sys_call_table` array. All syscall numbers are defined [here](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson05/include/sys.h#L6) — they are used by the assembler code to look up syscall. 
 
 Let's use `write` syscall as an example: 
 
@@ -81,13 +79,13 @@ msr    sp_el0, x21
 eret
 ```
 
-We are using 2 distinct stacks for EL0 and EL1. This is a common design because we want to separate user/kernel. 
+Even for the same task, we are using 2 distinct stacks for EL0 and EL1. This is a common design because we want to separate user/kernel. 
 
-Supported by CPU hardware, after taking an exception from EL0 to EL1, the CPU is using the SP for EL1. The SP for EL0 can be found in the `sp_el0` register. 
+Supported by CPU hardware, after taking an exception from EL0 to EL1, the CPU automatically starts use the SP for EL1. The SP for EL0 can be found in the `sp_el0` register. 
 
 The value of this register must be stored and restored upon entering/exiting the kernel, even if the kernel does not  use `sp_el0` in the exception handler. Reason: we need to virtualize `sp_el0` for each task because each task has its own user stack. Try to visualize this in your mind. 
 
-When we do `kernel_exit`, how do we specify which EL to return to, EL0 or EL1? `eret` does not have to explicitly specify so. This EL level is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
+When we do `kernel_exit`, how do we specify which EL to return to, EL0 or EL1? This EL level is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
 
 > How did we treat SP when taking interrupts (from EL1)? Revisit the figures in previous experiments. 
 

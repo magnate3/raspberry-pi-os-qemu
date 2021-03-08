@@ -197,7 +197,7 @@ The best documentation of gdb-dashboard seems from typing `help dashboard` in th
 
 Cannot connect? See "troubleshooting" below.
 
-# Other enhancement (FYI)
+## Other enhancement (FYI)
 
 
 GEF (https://github.com/hugsy/gef) is also viable. Both GEF and GDB-dashboard: 
@@ -214,7 +214,7 @@ GEF screenshot (note the CPU flags it recognized)
 
 
 
-### Troubleshooting
+## Troubleshooting
 
 **Cannot connect and need help?** Report the following:
 
@@ -237,7 +237,7 @@ Then enter GDB commands manually, e.g. load, target remote, etc. Does the proble
 https://stackoverflow.com/questions/53524546/gdbserver-target-description-specified-unknown-architecture-aarch64 
 It seems GDB server does not play well with WSL… be aware! 
 
-### Reference 
+## Reference 
 
 Launch qemu with gdb 
 

@@ -1,25 +1,25 @@
 # 4a: Cooperative Multitasking
 
-We will build a minimum kernel that can schedule multiple cooperative tasks. 
+Results with UART output: 
 
 ![](qemu-sched.gif)
 
 **Source code location: p1-kernel/src/lesson04a**
 
-## Roadmap
+## Overview
 From this experiment onward, our kernel starts to schedule multiple tasks. This makes it a true "kernel" instead of a baremetal program. 
 
-We will intentionally leave out interrupts, i.e. **timer interrupts are OFF**. Tasks must voluntarily yield to each other. As a result, this experiment focuses on scheduling and task switch. We defer interrupt handling to upcoming experiment. . 
+This experiment focuses on scheduling and task switch. Tasks must voluntarily yield to each other.  We defer interrupt handling to upcoming experiment. We will intentionally leave out interrupts, i.e. **timer interrupts are left OFF**. 
 
-We will implement: 
+**Roadmap.** We will implement: 
 
 1. The `task_struct` data structure 
 2. Task creation by manipulating `task_struct`, registers, and stack
 3. Minimalist memory allocation
-4. A minimalist task scheduler 
+4. Minimalist task scheduling
    <!--- counter. must be maintained in timer_tick() for accounting ... --->
 
-**Processes vs tasks**. As we do not have virtual memory yet, we use the term "tasks" instead of "processes". 
+**Processes or tasks?**. As we do not have virtual memory yet, we use the term "tasks" instead of "processes". Note: in Linux both thread and processes are just different types of tasks; the difference is in how they share address spaces. 
 
 ## Key data structures
 
@@ -28,7 +28,7 @@ We will implement:
 
 ### task_struct
 
-The first thing is to create a struct that describes a task. Linux has such a struct and it is called `task_struct`  (in Linux both thread and processes are just different types of tasks; the difference is in how they share address spaces). As we are mostly mimicking Linux implementation, we are going to do the same. It looks like the following (`sched.h`).
+A struct describing a task. Its name comes from the Linux kernel (again). The code is as follows (`sched.h`).
 
 ```
 struct cpu_context {
@@ -59,10 +59,11 @@ struct task_struct {
 This struct has the following members:
 
 * `cpu_context` This is a struct that contains values of all registers that might be different between the tasks.
-  * Why don't we save all registers, but only `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`). Because task switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. 
-  * From the point of view of the task that is being scheduled out (i.e. the "switched-from" task), it just calls `cpu_switch_to` function and it returns after some (potentially long) time. The "switched from" task is unaware of that another task (i.e. the "switched-to" task) happens to runs during this period.  
-  * Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the callee (i.e. `cpu_switch_to()` in our case). Hence, the kernel doesn't have to save the contents of `x0 - x18` for the caller (the "switched-from" task). 
-* `state` This is the state of the currently running task (NOT PSTATE -- an orthogonal concept). For a task just doing CPU work but not IO, the task state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). For now, this is the only state supported by our kernel. 
+  * Why don't we save all registers, but only `x19 - x30` and `sp`? (`fp` is `x29` and `pc` is `x30`). A short answer: to cater to the Armv8 calling convention. 
+    * Because task switch happens only when a task calls [cpu_switch_to](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/src/sched.S#L4) function. From the point of view of the task that is being scheduled out (i.e. the "switched-from" task), it just calls `cpu_switch_to` function and it returns after some (potentially long) time. 
+    * The "switched from" task is unaware of that another task (i.e. the "switched-to" task) happens to runs during this period.  
+    * Accordingly to ARM calling conventions registers `x0 - x18` can be overwritten by the callee (i.e. `cpu_switch_to()` in our case). Hence, the kernel doesn't have to save the contents of `x0 - x18` for the caller (the "switched-from" task). 
+* `state` The state of the currently running task (NOT `PSTATE` -- an orthogonal concept). For a task just doing CPU work but not IO, the task state will always be [TASK_RUNNING](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson04/include/sched.h#L15). For now, this is the only state supported by our kernel. 
   * Later we add a few additional states. For example, a task waiting for an interrupt should be in a different state, because it doesn't make sense to schedule the task when it is not ready to run yet. 
 * `counter` is used to determine how long the current task has been running. `counter` decreases by 1 each timer tick. When it reaches 0, the kernel will attempt to schedule another task. This supports our simple scheduling algorithm.
 * `priority`  When the kernel schedules a new task, the kernel copies the task's  `priority` value `counter`. In this way, the kernel can regulate the amount of processor time the task gets relative to other tasks.
@@ -193,7 +194,7 @@ Let's examine it line by line.
 
 ![](sched/Slide2.PNG)
 
-*The figure above: Registers are being saved to task_struct.context*
+*The figure above: During context switch, registers are being saved to task_struct.context*
 
 Next all callee-saved registers are stored in the order, in which they are defined in `cpu_context` structure. The current stack pointer is saved as `cpu_context.sp` and `x29` is saved as `cpu_context.fp` (frame pointer).
 
@@ -388,3 +389,9 @@ We will augment the scheduling algorithm for preemptive multitasking later.
 ## Conclusion
 
 We have seen important nuts & bolts of multitasking. The subsequent experiment will enable task preemption. We will show a detailed workflow of context switch there. 
+
+## One more thing ...
+
+There's support for a graphical console. Works for both QEMU and Rpi3. Display required. See [instructions](../lesson03/fb.md). 
+
+![](gfx-sched.gif)

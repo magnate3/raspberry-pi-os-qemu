@@ -39,6 +39,7 @@ Experimenting with these features is difficult with commodity kernels due to the
 * Cross-platform development 
 
 **Non-goals:**
+
 * Non-core or advanced functions of OS kernel, e.g. filesystem or power management, which can be learnt via experimenting with commodity OS. 
 * Rpi3-specific hardware details. The SoC of Rpi3 is notoriously unfriendly to kernel hackers. 
 * Implementation details of commodity kernels, e.g. Linux or Windows.  
@@ -54,6 +55,7 @@ Experimenting with these features is difficult with commodity kernels due to the
       * [CPU initialization, exception levels](lesson02/rpi-os.md)
 3. **Heartbeats on** (p1 exp3) 
       * [Interrupt handling](lesson03/rpi-os.md)
+      * [Interrupt-driven animation](lesson03/fb.md)
 4. **Process scheduler** (p1 exp4) 
       * [A. Cooperative](lesson04a/rpi-os.md) 
       * [B. Preemptive](lesson04b/rpi-os.md) 
