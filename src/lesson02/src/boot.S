@@ -25,7 +25,8 @@ master:
 	ldr	x0, =SPSR_VALUE	
 	msr	spsr_el2, x0
 
-	adr	x0, el1_entry		
+	#adr	x0, el1_entry
+	adr x0, el1_entry_another
 	msr	elr_el2, x0
 #else 					// xzl: Rpi3 hw boots from EL3. 
 	ldr	x0, =SCR_VALUE	// Secure config register. Only at EL3.
@@ -46,6 +47,7 @@ el1_entry:
 	sub	x1, x1, x0
 	bl 	memzero
 
+el1_entry_another:
 	mov	sp, #LOW_MEMORY
 	bl	kernel_main
 	b 	proc_hang		// should never come here

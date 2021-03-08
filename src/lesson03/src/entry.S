@@ -8,7 +8,7 @@
 	bl	show_invalid_entry_message
 	b	err_hang
 	.endm
-
+	
 	.macro	ventry	label
 	.align	7
 	b	\label
@@ -59,6 +59,31 @@
 /*
  * Exception vectors.
  */
+
+ .align	11
+.globl vectors_el2
+vectors_el2:
+	ventry	sync_invalid_el1t			// Synchronous EL1t
+	ventry	irq_invalid_el1t			// IRQ EL1t
+	ventry	fiq_invalid_el1t			// FIQ EL1t
+	ventry	error_invalid_el1t			// Error EL1t
+
+	ventry	sync_invalid_el1h			// Synchronous EL1h
+	ventry	el1_irq					// IRQ EL1h
+	ventry	fiq_invalid_el1h			// FIQ EL1h
+	ventry	error_invalid_el1h			// Error EL1h
+
+	ventry	sync_invalid_el0_64			// Synchronous 64-bit EL0
+	ventry	irq_invalid_el0_64			// IRQ 64-bit EL0
+	ventry	fiq_invalid_el0_64			// FIQ 64-bit EL0
+	ventry	error_invalid_el0_64			// Error 64-bit EL0
+
+	ventry	sync_invalid_el0_32			// Synchronous 32-bit EL0
+	ventry	irq_invalid_el0_32			// IRQ 32-bit EL0
+	ventry	fiq_invalid_el0_32			// FIQ 32-bit EL0
+	ventry	error_invalid_el0_32			// Error 32-bit EL0
+
+	
 .align	11
 .globl vectors 
 vectors:
@@ -67,7 +92,10 @@ vectors:
 	ventry	fiq_invalid_el1t			// FIQ EL1t
 	ventry	error_invalid_el1t			// Error EL1t
 
-	ventry	sync_invalid_el1h			// Synchronous EL1h
+	 ventry	sync_invalid_el1h			// Synchronous EL1h
+#if 0
+	ventry try_to_return
+#endif
 	ventry	el1_irq					// IRQ EL1h
 	ventry	fiq_invalid_el1h			// FIQ EL1h
 	ventry	error_invalid_el1h			// Error EL1h
@@ -134,3 +162,10 @@ el1_irq:
 
 .globl err_hang
 err_hang: b err_hang
+
+try_to_return:
+	kernel_entry
+	mrs x1, elr_el1
+	add x1, x1, 4
+	msr elr_el1, x1
+	kernel_exit

@@ -1,18 +1,22 @@
+framebuffer animation driven by timer irqs. 
+also implemented unified makefile
+
 ## To build
 
+export USE_QEMU=1   # one time
+or 
+# export USE_QEMU=1 # one time
 
 ```
-# export USE_QEMU=1 # one time
 make clean
 make
 ```
-Or 
 
-```
-# export USE_QEMU=   # one time
-# make clean
-make 
-```
+## To run
+
+### Windows PowerShell
+'C:\Program Files\qemu\qemu-system-aarch64.exe' -M raspi3 -kernel Y:\teaching\p1-kernel-workspace\p1-kernel\src\lesson03-bonus\kernel8.img -serial null -serial stdio
+
 
 derived from "raspi3-tutorial/09_framebuffer". See LICENSE
 

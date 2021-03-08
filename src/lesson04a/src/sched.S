@@ -1,5 +1,7 @@
 #include "sched.h"
 
+/* this is where context switch happens */
+
 .globl cpu_switch_to
 cpu_switch_to:
 	mov	x10, #THREAD_CPU_CONTEXT
@@ -11,7 +13,7 @@ cpu_switch_to:
 	stp	x25, x26, [x8], #16
 	stp	x27, x28, [x8], #16
 	stp	x29, x9, [x8], #16
-	str	x30, [x8]
+	str	x30, [x8]				// save LR (x30), pointing to where this function is called from
 	add	x8, x1, x10
 	ldp	x19, x20, [x8], #16		// restore callee-saved registers
 	ldp	x21, x22, [x8], #16
@@ -19,7 +21,7 @@ cpu_switch_to:
 	ldp	x25, x26, [x8], #16
 	ldp	x27, x28, [x8], #16
 	ldp	x29, x9, [x8], #16
-	ldr	x30, [x8]
+	ldr	x30, [x8]				// x30 == LR
 	mov	sp, x9
-	ret
+	ret							// jump to where LR points to 
 

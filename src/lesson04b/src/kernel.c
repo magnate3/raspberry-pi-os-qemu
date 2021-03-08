@@ -8,7 +8,17 @@
 
 void process(char *array)
 {
-	while (1){
+	while (1) {
+		for (int i = 0; i < 5; i++){
+			uart_send(array[i]);
+			delay(5000000);
+		}
+	}
+}
+
+void process2(char *array)
+{
+	while (1) {
 		for (int i = 0; i < 5; i++){
 			uart_send(array[i]);
 			delay(5000000);
@@ -33,7 +43,7 @@ void kernel_main(void)
 		printf("error while starting process 1");
 		return;
 	}
-	res = copy_process((unsigned long)&process, (unsigned long)"abcde");
+	res = copy_process((unsigned long)&process2, (unsigned long)"abcde");
 	if (res != 0) {
 		printf("error while starting process 2");
 		return;

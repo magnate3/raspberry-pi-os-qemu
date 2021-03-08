@@ -44,7 +44,7 @@ el1_entry:
 	adr	x0, bss_begin
 	adr	x1, bss_end
 	sub	x1, x1, x0
-	bl 	memzero
+	bl 	memzero	
 
 	mov	sp, #LOW_MEMORY
 	bl	kernel_main

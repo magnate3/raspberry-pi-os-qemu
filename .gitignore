@@ -12,6 +12,9 @@ src/*/build
 **/*.list
 **/*.cmd
 
+/.vscode/*
+
+*.json
 
 *.pdf
 

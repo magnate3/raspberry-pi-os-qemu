@@ -62,6 +62,7 @@ void kernel_main(void)
 		printf("error while starting process 1");
 		return;
 	}
+	
 	res = copy_process((unsigned long)&process, (unsigned long)"abcde");
 	if (res != 0) {
 		printf("error while starting process 2");
