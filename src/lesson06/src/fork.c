@@ -41,6 +41,11 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg)
 }
 
 
+/* @start: a pointer to the beginning of the user code area, 
+   @size: size of the area 
+   @pc: offset of the startup function inside the area
+*/   
+
 int move_to_user_mode(unsigned long start, unsigned long size, unsigned long pc)
 {
 	struct pt_regs *regs = task_pt_regs(current);
@@ -51,7 +56,7 @@ int move_to_user_mode(unsigned long start, unsigned long size, unsigned long pc)
 	if (code_page == 0)	{
 		return -1;
 	}
-	memcpy(start, code_page, size);
+	memcpy(start, code_page, size); /* NB: arg1-src; arg2-dest */
 	set_pgd(current->mm.pgd);
 	return 0;
 }

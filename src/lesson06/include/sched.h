@@ -50,7 +50,8 @@ struct mm_struct {
 	int user_pages_count;
 	struct user_page user_pages[MAX_PROCESS_PAGES];
 	int kernel_pages_count;
-	unsigned long kernel_pages[MAX_PROCESS_PAGES];
+	/* keep track of which (kernel) pages are used for this task. */
+	unsigned long kernel_pages[MAX_PROCESS_PAGES]; 
 };
 
 struct task_struct {
