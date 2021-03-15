@@ -59,6 +59,23 @@ el1_entry:
 	bl 	memzero
 
 #ifdef USE_QEMU
+// A workaround for QEMU's quirks on MMU emulation. 
+// As soon as the MMU is on and CPU switches from physical addresses to virtual addresses, 
+// the emulated CPU seems to be still fetching next (few) instructions using the physical 
+// addresses of those instructions. These addresses will go through MMU for translation 
+// as if they are virtual addresses. Of course our kernel pgtables do not have translation
+// for these addresses (TTBR1 is for translating virtual addresses at 0xffff...). That causes 
+// MMU to throw a Prefetch abort. (prefetch == instruction loading)
+//
+// Real Rpi3 hardware has no such a problem: after MMU is on, it will not fetch instructions 
+// at addresses calculated before MMU is on. 
+//
+// The workaround is to set an "identity" mapping. That is, we create an additional 
+// pgtable tree at TTBR0 that maps all physical DRAM (0 -- PHYS_MEMORY_SIZE) to virtual 
+// addresses with the same values. That keeps translation going on at the switch of MMU. 
+//
+// Cf: https://github.com/s-matyukevich/raspberry-pi-os/issues/8
+// https://www.raspberrypi.org/forums/viewtopic.php?t=222408
 	bl	__create_idmap
 	adrp	x0, idmap_dir
 	msr	ttbr0_el1, x0
@@ -155,7 +172,7 @@ __create_page_tables:
 	/* Mapping device memory*/
 	mov 	x1, #DEVICE_BASE					// start mapping from device base address 
 	ldr 	x2, =(VA_START + DEVICE_BASE)				// first virtual address
-	ldr	x3, =(VA_START + PHYS_MEMORY_SIZE - SECTION_SIZE)	// last virtual address
+	ldr		x3, =(VA_START + PHYS_MEMORY_SIZE - SECTION_SIZE)	// last virtual address
 	create_block_map x0, x1, x2, x3, MMU_DEVICE_FLAGS, x4
 
 	mov	x30, x29						// restore return address
