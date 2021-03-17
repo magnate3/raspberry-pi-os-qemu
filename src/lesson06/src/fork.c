@@ -41,7 +41,7 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg)
 }
 
 
-/* @start: a pointer to the beginning of the user code area, 
+/* @start: a pointer to the beginning of the user code (to be copied to the new task), 
    @size: size of the area 
    @pc: offset of the startup function inside the area
 */   

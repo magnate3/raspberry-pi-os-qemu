@@ -59,7 +59,9 @@ el1_entry:
 	bl 	memzero
 
 #ifdef USE_QEMU
-// A workaround for QEMU's quirks on MMU emulation. 
+// A workaround for QEMU's quirks on MMU emulation, which also showcases how __create_page_tables
+// can be used. 
+// 
 // As soon as the MMU is on and CPU switches from physical addresses to virtual addresses, 
 // the emulated CPU seems to be still fetching next (few) instructions using the physical 
 // addresses of those instructions. These addresses will go through MMU for translation 
@@ -89,8 +91,9 @@ el1_entry:
 	adrp	x0, pg_dir				
 	msr	ttbr1_el1, x0
 
+	// tcr_el1: Translation Control Register, responsible for configuring MMU, e.g. page size
 	ldr	x0, =(TCR_VALUE)		
-	msr	tcr_el1, x0
+	msr	tcr_el1, x0 
 
 	ldr	x0, =(MAIR_VALUE)
 	msr	mair_el1, x0
@@ -98,35 +101,58 @@ el1_entry:
 	ldr	x2, =kernel_main
 
 	mov	x0, #SCTLR_MMU_ENABLED				
-	msr	sctlr_el1, x0
+	msr	sctlr_el1, x0	// BOOM! we are on virtual after this.
 
 	br 	x2
 
+	// Allocate one PGD and one PUD for a given virt addr. Link the PGD to the PUD. 
+	//
+	// @tbl: a regsiter pointing to the last pgtable in a memory region, from which pgtables 
+	//			are allocated sequentially
+	// @virt: the virtual address that we are currently mapping
+	// @tmp1/2: temporary registers to use; contents will be clobbered 
 	.macro	create_pgd_entry, tbl, virt, tmp1, tmp2
 	create_table_entry \tbl, \virt, PGD_SHIFT, \tmp1, \tmp2
+	// @tbl now points to the newly created PGD table
 	create_table_entry \tbl, \virt, PUD_SHIFT, \tmp1, \tmp2
+	// @tbl now points to the newly created PUD table
 	.endm
 
+	// Allocating a new page table (either PGD or PUD) for the kernel's initial page tables
+	// All the initial page tables are located in one continuous memory region
+	//
+	// @tbl: a regsiter pointing to the last pgtable in a memory region, from which pgtables 
+	//			are allocated sequentially
+	// @virt: the virtual address that we are currently mapping
+	// @shift: 39 in case of PGD and 30 in case of PUD
+	// 		   apply to the virtual address in order to extract current table index. 
+	// @tmp1/2: temporary registers to use; contents will be clobbered 
 	.macro	create_table_entry, tbl, virt, shift, tmp1, tmp2
 	lsr	\tmp1, \virt, #\shift
-	and	\tmp1, \tmp1, #PTRS_PER_TABLE - 1			// table index
-	add	\tmp2, \tbl, #PAGE_SIZE
-	orr	\tmp2, \tmp2, #MM_TYPE_PAGE_TABLE	
-	str	\tmp2, [\tbl, \tmp1, lsl #3]
-	add	\tbl, \tbl, #PAGE_SIZE					// next level table page
+	and	\tmp1, \tmp1, #PTRS_PER_TABLE - 1		// tmp1: table index
+	add	\tmp2, \tbl, #PAGE_SIZE					// tmp2: addr of a next level pagetable. 
+	orr	\tmp2, \tmp2, #MM_TYPE_PAGE_TABLE		// tmp2: make a table descriptor. set bits[0:1] to 1. 
+	str	\tmp2, [\tbl, \tmp1, lsl #3]			// store descriptor (tmp2) to the current pgtable at index (tmp1)
+	add	\tbl, \tbl, #PAGE_SIZE					// point @tbl to the newly create next level pgtable. programming ease
 	.endm
 
+	// Populating entries in a PMD table for a given virt addr range 
+	// @tbl: a reg pointing to the PMD table
+	// @phys: the start of the physical region to be mapped
+	// @start/@end: virtual address of the first/last section to be mapped
+	// @flags: to be copied into lower attributes of the block descriptor
+	// @tmp1: temporary register to use; contents will be clobbered
 	.macro	create_block_map, tbl, phys, start, end, flags, tmp1
 	lsr	\start, \start, #SECTION_SHIFT
-	and	\start, \start, #PTRS_PER_TABLE - 1			// table index
+	and	\start, \start, #PTRS_PER_TABLE - 1			// start index in the PMD
 	lsr	\end, \end, #SECTION_SHIFT
-	and	\end, \end, #PTRS_PER_TABLE - 1				// table end index
-	lsr	\phys, \phys, #SECTION_SHIFT
+	and	\end, \end, #PTRS_PER_TABLE - 1				// end index in the PMD
+	lsr	\phys, \phys, #SECTION_SHIFT				// assmble a table entry 
 	mov	\tmp1, #\flags
-	orr	\phys, \tmp1, \phys, lsl #SECTION_SHIFT			// table entry
-9999:	str	\phys, [\tbl, \start, lsl #3]				// store the entry
-	add	\start, \start, #1					// next entry
-	add	\phys, \phys, #SECTION_SIZE				// next block
+	orr	\phys, \tmp1, \phys, lsl #SECTION_SHIFT			// phys: the table entry value
+9999:	str	\phys, [\tbl, \start, lsl #3]				// store the entry in PMD
+	add	\start, \start, #1								// @start: index of next PMD entry 
+	add	\phys, \phys, #SECTION_SIZE						// update the table entry value
 	cmp	\start, \end
 	b.ls	9999b
 	.endm
@@ -153,26 +179,28 @@ __create_idmap:
 #endif
 
 __create_page_tables:
-	mov	x29, x30						// save return address
+	mov		x29, x30						// save return address
 
-	adrp	x0, pg_dir
-	mov	x1, #PG_DIR_SIZE
-	bl 	memzero
+	// clear the mem region backing pgtables
+	adrp 	x0, pg_dir
+	mov		x1, #PG_DIR_SIZE
+	bl 		memzero
 
+	// allocate one PGD & one PUD and link them
 	adrp	x0, pg_dir
-	mov	x1, #VA_START 
-	create_pgd_entry x0, x1, x2, x3
+	mov		x1, #VA_START 
+	create_pgd_entry x0, x1, x2, x3		// after this, x0 points to the new PUD table
 
 	/* Mapping kernel and init stack*/
-	mov 	x1, xzr							// start mapping from physical offset 0
-	mov 	x2, #VA_START						// first virtual address
-	ldr	x3, =(VA_START + DEVICE_BASE - SECTION_SIZE)		// last virtual address
+	mov 	x1, xzr				// x1 = starting phys addr. set x1 to 0. 
+	mov 	x2, #VA_START		// x2 = the virtual base of the first section
+	ldr		x3, =(VA_START + DEVICE_BASE - SECTION_SIZE)  // x3 = the virtual base of the last section
 	create_block_map x0, x1, x2, x3, MMU_FLAGS, x4
 
 	/* Mapping device memory*/
-	mov 	x1, #DEVICE_BASE					// start mapping from device base address 
-	ldr 	x2, =(VA_START + DEVICE_BASE)				// first virtual address
-	ldr		x3, =(VA_START + PHYS_MEMORY_SIZE - SECTION_SIZE)	// last virtual address
+	mov 	x1, #DEVICE_BASE					// x1 = start mapping from device base address 
+	ldr 	x2, =(VA_START + DEVICE_BASE)				// x2 = first virtual address
+	ldr		x3, =(VA_START + PHYS_MEMORY_SIZE - SECTION_SIZE)	// x3 = the virtual base of the last section
 	create_block_map x0, x1, x2, x3, MMU_DEVICE_FLAGS, x4
 
 	mov	x30, x29						// restore return address
