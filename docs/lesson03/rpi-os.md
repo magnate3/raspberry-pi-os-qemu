@@ -67,8 +67,8 @@ Format: the kernel **define 16 exception handlers**: 4 types [SError, fiq, irq, 
 
 1. **EL1t** Exception happens when CPU is at EL1 while the stack pointer (SP) was set to be shared with EL0. This happens when `SPSel` register holds the value `0`.  Recall that `SPSel` is part of the CPU's PSTATE. 
 1. **EL1h** Exception happens at EL1 at the time when a dedicated SP was allocated for EL1. This happens when `SPSel` holds the value `1`. **This is the mode that our kernel is are currently using.**
-1. **EL0_64** Exception is taken from EL0 executing in 64-bit mode. This experiment will not deal with EL0. Spoiler: EL0_64 corresponds to the exceptions that caused by 64-bit user programs. 
-1. **EL0_32** Exception is taken from EL0 executing in 32-bit mode. This experiment will not deal with EL0 or 32-bit mode. Spoiler: this corresponds to exceptions in 32-bit user programs. 
+1. **EL0_64** Exception is taken from EL0 executing in 64-bit mode. This experiment will not deal with EL0. Spoiler: EL0_64 corresponds to the exceptions that caused by 64-bit user programs. (Note: in the vector table for EL1, this entry is for EL0_64; in the vector table for EL2, this is for EL1_64)
+1. **EL0_32** Exception is taken from EL0 executing in 32-bit mode. This experiment will not deal with EL0 or 32-bit mode. Spoiler: this corresponds to exceptions in 32-bit user programs. (Note: in the vector table for EL1, this entry is for EL0_32; in the vector table for EL2, this is for EL1_32)
 
 > "The t and h suffixes are based on the terminology of *thread* and *handler*, introduced in ARMv7-M." -- ARM
 
