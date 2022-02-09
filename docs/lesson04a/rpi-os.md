@@ -192,7 +192,7 @@ Let's examine it line by line.
     str    x30, [x8]
 ```
 
-![](sched/Slide2.PNG)
+![](sched/Slide2.png)
 
 *The figure above: During context switch, registers are being saved to task_struct.context*
 
