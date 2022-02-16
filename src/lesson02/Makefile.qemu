@@ -1,7 +1,12 @@
 ARMGNU ?= aarch64-linux-gnu
 
-COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 -DUSE_QEMU
+<<<<<<< HEAD
+COPS = -Wall -Werror -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 -DUSE_QEMU
 ASMOPS = -Iinclude  -g -DUSE_QEMU
+=======
+COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0 -DUSE_QEMU
+ASMOPS = -Iinclude -g -DUSE_QEMU
+>>>>>>> ebba0dcdd7e50e24ef6f572bc02d4cfeb179b5eb
 
 BUILD_DIR = build
 SRC_DIR = src

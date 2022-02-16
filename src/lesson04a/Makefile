@@ -1,8 +1,12 @@
 ARMGNU ?= aarch64-linux-gnu
 
+<<<<<<< HEAD
+COPS = -Wall -Werror -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0
+=======
 COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only -g -O0
 COPS += -DUSE_LFB
 
+>>>>>>> ebba0dcdd7e50e24ef6f572bc02d4cfeb179b5eb
 ASMOPS = -Iinclude  -g
 
 BUILD_DIR = build
