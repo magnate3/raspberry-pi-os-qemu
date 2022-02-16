@@ -74,7 +74,7 @@ void timer_tick()
     ... 
 ```
 
-First of all, it decreases current task's counter. If the counter is greater then 0 or preemption is currently disabled the function returns. Otherwise`schedule` is called with interrupts enabled. (Note: we just came from an interrupt handler and CPU just automatically disabled all interrupts.) 
+First of all, it decreases current task's counter. If the counter is greater than 0 or preemption is currently disabled the function returns. Otherwise`schedule` is called with interrupts enabled. (Note: we just came from an interrupt handler and CPU just automatically disabled all interrupts.) 
 
 Why interrupts must be enabled in the scheduler? More on this later. 
 
@@ -88,7 +88,7 @@ With preemptive scheduling, the kernel must save & restore CPU contexts for the 
 
 *Figure above: in previous experiments w/o multitasking, save/restore registers upon entering/leaving irq handlers.* 
 
-With multitasking, the kernel now has to create per-task copies of CPU context in memory: general-purpose registers plus `elr_el1` and `spsr_el`. 
+With multitasking, the kernel now has to create per-task copies of CPU context in memory: ALL general-purpose registers plus `elr_el1` and `spsr_el`. 
 
 **Where to store the CPU context?** 
 
