@@ -172,7 +172,9 @@ The following figure shows how the kernel memory look like before & after handli
 
 ![](images/irq.png)
 
+#### interrupt enable/disable?
 
+When an exception happens, the CPU will turn off interrupts automatically. When we return from an interrupt, ERET will restore PSTATE from SPSR_EL1, which contains the DAIF flags that control the interrupt state (i.e. enabled or disabled). 
 
 ## Configuring interrupts
 
