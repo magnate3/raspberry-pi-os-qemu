@@ -22,8 +22,8 @@ NOTE: this experiment enables running user/kernel at different ELs. Yet, it does
 
 1. Implement the syscall mechanism, in particular switch between EL0 and EL1 (you have already done something similar in previous experiments!)
 2. Implement two mechanisms that put user tasks to EL0: 
-   1. forking an existing user task at EL0
-   2. moving a kernel task EL1 -> EL0
+* forking an existing user task at EL0
+* moving a kernel task EL1 -> EL0
 
 ## Syscall implementation
 
