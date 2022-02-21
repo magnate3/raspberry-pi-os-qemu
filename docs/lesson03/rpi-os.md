@@ -314,6 +314,12 @@ This writes 1 to the control register (`CNTP_CTL_EL0`) of **the EL1 physical tim
 | Secure EL2 physical timer     | CNTHPS              | `EL2`       |
 | Secure EL2 virtual timer      | CNTHVS              | `EL2`       |
 
+(From Arm's generic timer document:)
+
+The CNTPCT_EL0 system register reports the current system count value.
+
+> CNTFRQ_EL0reports the frequency of the system count. However, this register is not populated by hardware. The register is write-able at the highest implemented Exception level and readable at all Exception levels. Firmware, typically running at EL3, populates this register as part of early system initialization. Higher-level software, like an operating system, can then use the register to get the frequency.
+
 #### Turn on timer interrupt at the CPU core
 
 We have to deal with yet another Rpi3 quirk. The Arm generic timer IRQs are wired to a per-core interrupt controller/register. For core 0, this is `TIMER_INT_CTRL_0` at 0x40000040; bit 1 is for physical timer at EL1 (CNTP). This register is documented in the [manual](https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2836/QA7_rev3.4.pdf) of BCM2836 (search for "Core timers interrupts"). Note the manual is NOT for the BCM2837 SoC used by Rpi3. I have no idea how community figured this out. 
