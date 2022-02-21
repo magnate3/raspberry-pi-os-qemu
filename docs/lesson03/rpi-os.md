@@ -272,7 +272,7 @@ How should the kernel program the timer? The hardware provides two core register
 
 * CVAL, a 64-bit comparator. Roughly, this sets a "threshold" for System Counter: 
   * Example: The kernel writes a value X to CVAL. When System Counter exceeds X, the timer generates an interrupt.
-* TVAL, a 32-bit timer value. Roughly, this sets a "delta" for System Counter: 
+* TVAL, a 32-bit *signed* timer value. Roughly, this sets a "delta" for System Counter: 
   * Example: The kernel writes a value X to TVAL. The hardware updates CVAL +=  the Current System Counter + TVAL. The timer generates an interrupt according to the new CVAL. 
 
 The above brief description would suffice in our kernel experiment. Beyond them, TVAL has another less intuitive, "countdown" function (not used in this experiment but useful for timekeeping). Since the last write by software, TVAL decrements as System Counter increments. The moment TVAL counts down to 0 is when an interrupt fires. After that, TVAL will keep counting down to a minus value. 
