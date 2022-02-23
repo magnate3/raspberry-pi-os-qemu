@@ -25,6 +25,8 @@ We take the following steps.
 
 ## Background: ARM64 translation process
 
+The Arm's document is well written. ("Armv8-A Address Translation", [link](https://developer.arm.com/documentation/100940/0101/))
+
 ### Page table format
 
 This experiment introduces VM to our kernel. With VM, we can formally call tasks "processes". Each task will have its own address space. They issue memory access with virtual addresses. The MMU transparently translates virtual addresses to physical addresses. The MMU uses page table (or pgtable, or "translation table" in ARM's manual). 
@@ -42,15 +44,15 @@ The following diagram summarizes ARM64 address translation with uses 4-level pgt
           +------+            |          |                                |            |           |     |                  |
           |                   |          +----------+                     |            |           |     |------------------|
 +------+  |        PGD        |                     |                     |            +---------------->| Physical address |
-| ttbr |---->+-------------+  |           PUD       |                     |                        |     |------------------|
-+------+  |  |             |  | +->+-------------+  |          PMD        |                        |     |                  |
-          |  +-------------+  | |  |             |  | +->+-------------+  |          PTE           |     +------------------+
-          +->| PUD address |----+  +-------------+  | |  |             |  | +->+--------------+    |     |                  |
-             +-------------+  +--->| PMD address |----+  +-------------+  | |  |              |    |     |                  |
-             |             |       +-------------+  +--->| PTE address |----+  +-------------_+    |     |                  |
-             +-------------+       |             |       +-------------+  +--->| Page address |----+     |                  |
-                                   +-------------+       |             |       +--------------+          |                  |
-                                                         +-------------+       |              |          |                  |
+|TTBRx |---->+-------------+  |           PUD       |                     |                        |     |------------------|
++-EL1--+  |  |  entry #511 |  | +->+-------------+  |          PMD        |                        |     |                  |
+          |  +-------------+  | |  |     #511    |  | +->+-------------+  |          PTE           |     +------------------+
+          +->| PUD address |----+  +-------------+  | |  |   #511      |  | +->+--------------+    |     |                  |
+             +-------------+  +--->| PMD address |----+  +-------------+  | |  |      #511    |    |     |                  |
+             |  entry #0   |       +-------------+  +--->| PTE address |----+  +-------------_+    |     |                  |
+             +-------------+       |       #0    |       +-------------+  +--->| Page address |----+     |                  |
+                                   +-------------+       |     #0      |       +--------------+          |                  |
+                                                         +-------------+       |      #0      |          |                  |
                                                                                +--------------+          +------------------+
 ```
 
@@ -66,7 +68,11 @@ Notable points:
 
 * Besides holding a physical address, each pgtable item holds extra bits crucial for translation. Will examine the format below. 
 
-* MMU starts memory translation process by locating the base address of PGD. MMU locates the base address from the `ttbr0_el1` register which should be set by the kernel. ttbr=translation table base register.
+* MMU starts memory translation process by locating the base address of PGD. MMU locates the base address from the `TTBRx_EL1` register which should be set by the kernel. TTBR = translation table base register.
+
+  * bits [63-47] = 0xffff (all 1s). MMU uses `ttbr1_el1`. This is meant for the kernel space. 
+  * bits [63-47] = 0x0 (all 1s). MMU uses `ttbr0_el1`. This is meant for the user process. 
+  * Each process has its own address space. Therefore, it has its own copy of page table tree, starting from PGD. Therefore, the kernel keeps a separate PGD base address for each process. That is, the kernel virtualizes PGD for processes. During a context switch, the kernel loads the PGD base of the next process to `ttbr0_el1`.
 
 * MMU walks the pgtable tree to look up the physical address. A virtual address uses only 48 out of 64 available bits.  When doing a translation, MMU splits an address into 4 parts:
   * 9 bits [39 - 47] contain an index in the PGD table. MMU uses this index to find the location of the PUD.
@@ -74,8 +80,6 @@ Notable points:
   * 9 bits [21 - 29] contain an index in the PMD table. MMU uses this index to find the location of the PTE.
   * 9 bits [12 - 20] contain an index in the PTE table. MMU uses this index to find a page in the physical memory.
   * Bits [0 - 11] contain an offset in the physical page. MMU uses this offset to determine the exact position in the previously found page that corresponds to the original virtual address.
-
-* Each process has its own address space. Therefore, it has its own copy of page table tree, starting from PGD. Therefore, the kernel keeps a separate PGD base address for each process. That is, the kernel virtualizes PGD for processes. During a context switch, the kernel loads the PGD base of the next process to `ttbr0_el1`.
 
 * Memory for a user process is always allocated in pages. A page is a contiguous memory region 4KB in size (ARM processors support larger pages, but 4KB is the most common case and we are going to limit our discussion only to this page size).
 
@@ -98,8 +102,8 @@ This is specific to ARM64 for mapping large, continuous physical memory. Instead
           +------+            |          |                  |                    |     |                  |
           |                   |          +----------+       |                    |     |------------------|
 +------+  |        PGD        |                     |       +------------------------->| Physical address |
-| ttbr |---->+-------------+  |           PUD       |                            |     |------------------|
-+------+  |  |             |  | +->+-------------+  |            PMD             |     |                  |
+| TTBRx|---->+-------------+  |           PUD       |                            |     |------------------|
++--EL1-+  |  |             |  | +->+-------------+  |            PMD             |     |                  |
           |  +-------------+  | |  |             |  | +->+-----------------+     |     +------------------+
           +->| PUD address |----+  +-------------+  | |  |                 |     |     |                  |
              +-------------+  +--->| PMD address |----+  +-----------------+     |     |                  |
@@ -171,14 +175,20 @@ Commodity kernels therefore avoid frequent reloads of PGD base. A kernel splits 
 
 On 32-bit CPUs, a kernel usually allocate first 3 GB of the address space for user and reserve last 1 GB for the kernel. 64-bit architectures are much more favorable in this regard because of huge virtual address space (how large?). And even more: ARMv8 architecture comes with a native feature that can be used to easily implement user/kernel address split.
 
-ARM64 defines 2 `ttbr` registers for holding PGD base addresses: `ttbr0_el1` and `ttbr1_el1`, pointing to the user PGD and the kernel PGD, respectively. 
+ARM64 defines 2 `TTBR` registers for holding PGD base addresses: 
+* TTBR0_EL1 points to a user PGD; 
+* TTBR1_EL1 points to the kernel PGD. 
 
-As you might remember MMU uses only 48 bits out of 64 bits in the virtual addresses for translation, so the upper 16 bits can be used to distinguish between `ttbr0`  and `ttbr1` translation processes. 
+MMU uses only 48 bits out of 64 bits in the virtual addresses for translation. MMU uses the upper 16 bits in a given virtual address to decide whether it uses TTBR0 or TTBR1. 
 
-* **User virtual addresses**: upper 16 bits == 0. MMU uses the PGD base stored in `ttbr0_el1`. This value shall be changed according to process switch. 
-* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in `ttbr0_el1`. This value shall remain unchanged throughout the life of the kernel. 
+* **User virtual addresses**: upper 16 bits == 0. MMU uses the PGD base stored in TTBR0_EL1.  This value shall be changed according to process switch. 
+* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in ~~ttbr0_el1~~ TTBR1_EL1. This value shall remain unchanged throughout the life of the kernel. 
 
 The CPU also enforces that software at EL0 can never access virtual addresses started with `0xffff`. Doing so triggers a synchronous exception.  
+
+Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Translation". 
+
+![image.png](s3)
 
 ### **Adjusting kernel addresses** 
 
@@ -248,7 +258,7 @@ Now we are going to step outside `__create_page_tables` function and take a look
 
 This macro accepts the following arguments.
 
-* `tbl` - a pointer to a memory region were new table has to be allocated.
+* `tbl` - a pointer to a memory region where new table has to be allocated.
 * `virt` - virtual address that we are currently mapping.
 * `shift` - shift that we need to apply to the virtual address in order to extract current table index. (39 in case of PGD and 30 in case of PUD)
 * `tmp1`, `tmp2` - temporary registers.

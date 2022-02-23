@@ -7,7 +7,7 @@
 export PATH="$(pwd)/qemu/aarch64-softmmu:${PATH}"
 
 # (optional: grab a sample kernel binary for testing)
-wget https://github.com/fxlin/p1-kernel/releases/download/exp1/kernel8.img
+wget https://github.com/fxlin/p1-kernel/releases/download/exp1-qemu/kernel8.img
 ```
 
 Explanation: the `export` command adds the path to QEMU to the search paths, so that whenever you type `qemu-system-aarch64`, the shell can find it. You may want to add the line to `~/.bashrc` so it is executed whenever you log in to the server
@@ -141,4 +141,3 @@ interval is set to: 67108864
 https://wiki.osdev.org/QEMU
 
 All QEMU options: https://github.com/qemu/qemu/blob/master/qemu-options.hx
-
