@@ -253,6 +253,3 @@ On Windows (WSL)
 
 Move to [the QEMU cheatsheet](../qemu.md). 
 
-```
-
-```

@@ -2,10 +2,11 @@
 
 This document describes server resources and how to connect for development. 
 
-|                                                              | Projects   | hardware specs                                | OS               |
-| ------------------------------------------------------------ | ---------- | --------------------------------------------- | ---------------- |
-| granger1.cs.virginia.edu                                     | p1-p4      | Dual Xeon 2630v4 Broadwell (10c20t), 20 cores | Ubuntu 20.04 LTS |
-| labsrv06.cs.virginia.edu (Jan 30: temporarily out of service) | All but p2 | Single Xeon Silver 4410 CPU (8c16t), 8 cores  | Ubuntu 20.04 LTS |
+|                                               | Projects   | hardware specs                                | OS               |
+| --------------------------------------------- | ---------- | --------------------------------------------- | ---------------- |
+| granger1.cs.virginia.edu                      | p1-p4      | Dual Xeon 2630v4 Broadwell (10c20t), 20 cores | Ubuntu 20.04 LTS |
+| granger2.cs.virginia.edu                      | p1-p4      | Dual Xeon 2630v4 Broadwell (10c20t), 20 cores | Ubuntu 20.04 LTS |
+| ~~labsrv06.cs.virginia.edu (out of service)~~ | All but p2 | Single Xeon Silver 4410 CPU (8c16t), 8 cores  | Ubuntu 20.04 LTS |
 
 <!--- Using your CS credentials (not the UVA ones). See [wiki page](https://www.cs.virginia.edu/wiki/doku.php?id=compute_resources). Contact felixlin@ if you do not have CS credentials.  --->
 
@@ -74,7 +75,7 @@ $ ssh-copy-id xl6yq@granger1.cs.virginia.edu
 $ ssh xl6yq@granger1.cs.virginia.edu
 ```
 
-**An alternative procedure (02/07/21):** Peiyi Yang, our TA, reported her successful configuration procedure as follows. 
+**An alternative procedure (02/07/21)** Credits Peiyi Yang, TA 2021. 
 
 Started from scratch. First edited the ssh config file on the local computer saying to jump through portal when going to granger1. Then ran ssh-copy-id id@portal and entered the password to install the local's pubkey on portal. Then from local, ran ssh-copy-id id@granger1 and entered the password to install the local's pubkey on granger1.
 
@@ -116,6 +117,13 @@ ssh -vv granger1.cs.virginia.edu
 ```
 Explanation: -vv tells ssh to dump its interactions with granger1 on negotiating keys. As a reference, my output is [here](granger1-ssh-output.txt). At the end of the output, you can see granger1 accepts my key offered from portal. 
 
+Can do password-less authentication between local/portal and between portal/granger[12], but are still required to enter password between local/granger? From your local machine, type
+```
+ssh -vv granger1.cs.virginia.edu
+```
+And compare line-by-line with the output to the reference output [here](granger1-ssh-local-output.txt). 
+
+
 **Note to Windows Users**: if you try to invoke ssh-copy-id that comes with Windows (the one you can invoke in PowerShell, not the one in WSL), there may be some caveats. See [here](https://www.chrisjhart.com/Windows-10-ssh-copy-id/). I would say just invoke ssh-copy-id in WSL. 
 
 ### 2. Save connection info in SSH config
@@ -132,7 +140,7 @@ With the configuration, your local ssh client knows that when connecting  to hos
 ```
 $ ssh granger1
 ```
-### (FYI) a one-liner for connecting to course servers 
+### Aside: a one-liner for connecting to course servers 
 
 ```
 $ ssh -l USERNAME granger1.cs.virginia.edu -J portal.cs.virginia.edu
@@ -163,11 +171,9 @@ tl;dr: VSCode will connect to the course server (Linux) using SSH under the hood
 
 ### Windows caveat 1: ssh keys
 
-The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`), which different from the ssh client that you run in WSL. The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. 
+The extension (Remote.SSH) will invoke Window's ssh client (`c:\Windows\System32\OpenSSH\ssh.exe`).The Window's ssh client expects its config file at `C:\Users\%USERNAME%\.ssh\config`. This is NOT the ssh client you run from WSL. 
 
 ![](images/vscode-ssh-config.png)
-
->  *Screenshot from Peiyi Yang (py5yy@). * 
 
 If you haven't generated your SSH keys so far, you can do so by launching a PowerShell console and run `ssh-keygen` there. 
 
@@ -193,6 +199,8 @@ Now, you should be good to go with VSCode.
 
 Make sure you have the Remote.SSH extension installed. Click "Remote Explorer" on the left bar. The extension will pick up your ssh config file (again that's `C:/Users/%USERNAME%/.ssh/config`) and present a list of hosts recognized. Click one to connect to it. The extension will copy a bunch of stuffs to the host and launch some daemon on the host. Then you are connected. 
 
+**Password-less login used to work fine, but suddenly breaks?** A common cause is that VSCode updates automatically, overwriting the ssh client you manually installed. Solution: check your ssh version and use the one we suggested. 
+
 ### Launch a terminal
 
 After connection, click "remote" on the left bar to bring up a remote terminal, in which you can execute commands to build projects, etc. Make sure to click the "+" sign to create a new shell terminal. 
@@ -210,3 +218,15 @@ To browse & edit files on the server, click "explorer" on the left bar
 ![image-20210124192213976](images/vscode-remote-files.png)
 
 Click  "source control" on the left bar for a handy git interface. 
+
+### Troubleshooting
+
+Windows auto update may break VSCode's ssh configuration that worked previously. In this case, deleting (or moving to other places) the .vscode-server folder on granger and portal may solved the problem. 
+
+If things break, report: 
+
+- the error message of VSCode
+- the PowerShell output when you try to connect to **granger1** from the PowerShell command line
+- the PowerShell output when you try to connect to **cs portal** from the PowerShell command line
+- any recent Windows/VSCode updates
+

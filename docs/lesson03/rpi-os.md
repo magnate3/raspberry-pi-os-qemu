@@ -172,7 +172,9 @@ The following figure shows how the kernel memory look like before & after handli
 
 ![](images/irq.png)
 
+#### interrupt enable/disable?
 
+When an exception happens, the CPU will turn off interrupts automatically. When we return from an interrupt, ERET will restore PSTATE from SPSR_EL1, which contains the DAIF flags that control the interrupt state (i.e. enabled or disabled). 
 
 ## Configuring interrupts
 
@@ -272,7 +274,7 @@ How should the kernel program the timer? The hardware provides two core register
 
 * CVAL, a 64-bit comparator. Roughly, this sets a "threshold" for System Counter: 
   * Example: The kernel writes a value X to CVAL. When System Counter exceeds X, the timer generates an interrupt.
-* TVAL, a 32-bit timer value. Roughly, this sets a "delta" for System Counter: 
+* TVAL, a 32-bit *signed* timer value. Roughly, this sets a "delta" for System Counter: 
   * Example: The kernel writes a value X to TVAL. The hardware updates CVAL +=  the Current System Counter + TVAL. The timer generates an interrupt according to the new CVAL. 
 
 The above brief description would suffice in our kernel experiment. Beyond them, TVAL has another less intuitive, "countdown" function (not used in this experiment but useful for timekeeping). Since the last write by software, TVAL decrements as System Counter increments. The moment TVAL counts down to 0 is when an interrupt fires. After that, TVAL will keep counting down to a minus value. 
@@ -313,6 +315,12 @@ This writes 1 to the control register (`CNTP_CTL_EL0`) of **the EL1 physical tim
 | EL3 physical timer            | CNTPS               | `EL1`       |
 | Secure EL2 physical timer     | CNTHPS              | `EL2`       |
 | Secure EL2 virtual timer      | CNTHVS              | `EL2`       |
+
+(From Arm's generic timer document:)
+
+The CNTPCT_EL0 system register reports the current system count value.
+
+> CNTFRQ_EL0reports the frequency of the system count. However, this register is not populated by hardware. The register is write-able at the highest implemented Exception level and readable at all Exception levels. Firmware, typically running at EL3, populates this register as part of early system initialization. Higher-level software, like an operating system, can then use the register to get the frequency.
 
 #### Turn on timer interrupt at the CPU core
 
@@ -364,7 +372,7 @@ There are other timers on Rpi3 which you may see from various online blogs/tutor
 
 | Name              | Implemented by        | IRQ                                                    | QEMU support? (v5.0 )                                        | Phys Addr | Document                             |
 | ----------------- | --------------------- | ------------------------------------------------------ | ------------------------------------------------------------ | --------- | ------------------------------------ |
-| System Timer      | Broadcom (?)          | Global. In GPU irq space                               | Implemented as bcm2835_systmr. However free running and [cannot generate irq](https://lists.sr.ht/~philmd/qemu/patches/8811<br/>). | 3f003000  | BCM2837                              |
+| System Timer      | Broadcom (?)          | Global. In GPU irq space                               | Implemented as bcm2835_systmr. However free running and [cannot generate irq](https://lists.sr.ht/~philmd/qemu/patches/8811). | 3f003000  | BCM2837                              |
 | ARM timer         | Arm ip (sp804)        | Global. In Arm core's private irq space ("Basic irqs") | Unimplemented. See QEMU code bcm2835_peripherals.c           | 3f00b400  | BCM2836                              |
 | Local timer       | Broadcom (?)          | Per core                                               | [Partially implemented](https://forum.osdev.org/viewtopic.php?f=2&t=33537). Can generate trigger irq but readback seems unsupported. | 40000034  | BCM2836                              |
 | Arm generic timer | Arm, as part of armv8 | Per core                                               | Implemented                                                  | 40000040  | Armv8 doc +  BCM2836 for IRQ routing |
