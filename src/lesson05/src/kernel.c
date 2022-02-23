@@ -61,7 +61,6 @@ void kernel_process(){
 	} 
 }
 
-
 void kernel_main(void)
 {
 	uart_init();

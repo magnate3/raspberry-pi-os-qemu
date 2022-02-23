@@ -186,8 +186,8 @@ ret_from_syscall:
 .globl ret_from_fork
 ret_from_fork:
 	bl	schedule_tail
-	cbz	x19, ret_to_user			// not a kernel thread
-	mov	x0, x20
+	cbz	x19, ret_to_user			// branch if not a kernel thread
+	mov	x0, x20						// kernel thread, load fn/arg as populated by copy_process()
 	blr	x19
 ret_to_user:
 	bl disable_irq				
