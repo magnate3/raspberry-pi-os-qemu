@@ -19,13 +19,13 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 	memzero((unsigned long)childregs, sizeof(struct pt_regs));
 	memzero((unsigned long)&p->cpu_context, sizeof(struct cpu_context));
 
-	if (clone_flags & PF_KTHREAD) {
+	if (clone_flags & PF_KTHREAD) { /* kernel task, no pt_regs */
 		p->cpu_context.x19 = fn;
 		p->cpu_context.x20 = arg;
-	} else {
+	} else {	/* user task, pop pt_regs which always at the task's user stack top */
 		struct pt_regs * cur_regs = task_pt_regs(current);
 		*cur_regs = *childregs;
-		childregs->regs[0] = 0;
+		childregs->regs[0] = 0; /* return val of the clone() syscall */ 
 		childregs->sp = stack + PAGE_SIZE; 
 		p->stack = stack;
 	}
@@ -46,11 +46,14 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 
 int move_to_user_mode(unsigned long pc)
 {
+	/* convert a kernel task to a user task, which must have legit pt_regs */		
 	struct pt_regs *regs = task_pt_regs(current);
 	memzero((unsigned long)regs, sizeof(*regs));
 	regs->pc = pc;
 	regs->pstate = PSR_MODE_EL0t;
-	unsigned long stack = get_free_page(); //alocate new user stack
+	
+	/* alocate new user stack, in addition to the task's existing kernel stack */
+	unsigned long stack = get_free_page(); 
 	if (!stack) {
 		return -1;
 	}

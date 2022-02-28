@@ -176,13 +176,14 @@ Commodity kernels therefore avoid frequent reloads of PGD base. A kernel splits 
 On 32-bit CPUs, a kernel usually allocate first 3 GB of the address space for user and reserve last 1 GB for the kernel. 64-bit architectures are much more favorable in this regard because of huge virtual address space (how large?). And even more: ARMv8 architecture comes with a native feature that can be used to easily implement user/kernel address split.
 
 ARM64 defines 2 `TTBR` registers for holding PGD base addresses: 
+
 * TTBR0_EL1 points to a user PGD; 
 * TTBR1_EL1 points to the kernel PGD. 
 
 MMU uses only 48 bits out of 64 bits in the virtual addresses for translation. MMU uses the upper 16 bits in a given virtual address to decide whether it uses TTBR0 or TTBR1. 
 
 * **User virtual addresses**: upper 16 bits == 0. MMU uses the PGD base stored in TTBR0_EL1.  This value shall be changed according to process switch. 
-* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in ~~ttbr0_el1~~ TTBR1_EL1. This value shall remain unchanged throughout the life of the kernel. 
+* **Kernel virtual addresses**: upper 16 bits == `0xffff`.  MMU uses the PGD base stored in TTBR1_EL1. This value shall remain unchanged throughout the life of the kernel. 
 
 The CPU also enforces that software at EL0 can never access virtual addresses started with `0xffff`. Doing so triggers a synchronous exception.  
 
