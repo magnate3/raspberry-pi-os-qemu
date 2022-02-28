@@ -188,7 +188,7 @@ The CPU also enforces that software at EL0 can never access virtual addresses st
 
 Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Translation". 
 
-![image.png](s3)
+![addrspace.jpg](s3)
 
 ### **Adjusting kernel addresses** 
 
@@ -219,7 +219,8 @@ __create_page_tables:
     mov    x29, x30                        // save return address
 ```
 
-First, the function saves `x30` (LR). As we are going to call other functions from `__create_page_tables`, `x30` will be overwritten. Usually `x30` is saved on the stack but, as we know that we are not going to use recursion and nobody else will use `x29` during `__create_page_tables` execution, this simple method of preserving link register also works fine.
+First, the function saves `x30` (LR). As we are going to call other functions from `__create_page_tables`, `x30` will be overwritten. 
+As we know that no code will use `x29` during `__create_page_tables` execution, preserving LR in `x29` works fine.
 
 > Q: What could go wrong if we push x30 to stack here? 
 
