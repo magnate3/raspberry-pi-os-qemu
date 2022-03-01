@@ -27,7 +27,7 @@ NOTE: this experiment enables running user/kernel at different ELs. Yet, it does
 
 ## Syscall implementation
 
-Each system call is a synchronous exception. A user program prepares all necessary arguments, and then run `svc` instruction. Such exceptions are handled at EL1 by the kernel. The kernel validates all arguments, does the syscall, and exists from the exception. After that, the user task resumes at EL0 right after the `svc` instruction. 
+Each system call is a synchronous exception. A user program prepares all necessary arguments, and then run `svc` instruction. Such exceptions are handled at EL1 by the kernel. The kernel validates all arguments, does the syscall, and exits from the exception. After that, the user task resumes at EL0 right after the `svc` instruction. 
 
 ![](figures/timeline-0.png)
 
