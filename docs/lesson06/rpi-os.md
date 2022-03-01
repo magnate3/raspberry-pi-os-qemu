@@ -189,7 +189,7 @@ The CPU also enforces that software at EL0 can never access virtual addresses st
 
 Here is a picture the memory layout. Source: Arm's document "ARMv8-A Address Translation". 
 
-![addrspace.jpg](s3)
+![addrspace](addrspace.jpg)
 
 ### **Adjusting kernel addresses** 
 
