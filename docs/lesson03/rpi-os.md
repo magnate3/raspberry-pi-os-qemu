@@ -277,7 +277,7 @@ How should the kernel program the timer? The hardware provides two core register
 * TVAL, a 32-bit *signed* timer value. Roughly, this sets a "delta" for System Counter: 
   * Example: The kernel writes a value X to TVAL. The hardware updates CVAL +=  the Current System Counter + TVAL. The timer generates an interrupt according to the new CVAL. 
 
-The above brief description would suffice in our kernel experiment. Beyond them, TVAL has another less intuitive, "countdown" function (not used in this experiment but useful for timekeeping). Since the last write by software, TVAL decrements as System Counter increments. The moment TVAL counts down to 0 is when an interrupt fires. After that, TVAL will keep counting down to a minus value. 
+The above brief description would suffice in our kernel experiment. Beyond them, TVAL has another less intuitive, "countdown" function (not used in this experiment but useful for timekeeping). Since the last write by software, TVAL decrements as System Counter increments. The moment TVAL counts down to 0 is when an interrupt fires. After that, TVAL will keep counting down to a negative value. 
 
 **To summarize**: If software needs a timer event in X ticks of the clock, the software can write X to TVAL periodically. Alternatively, if software wants an event when the system count reaches Y, software can write Y to CVAL. If software wants to know the remaining ticks until the next interrupt, the software reads from TVAL.
 
@@ -293,6 +293,9 @@ gen_timer_init:
 ```
 
 This writes 1 to the control register (`CNTP_CTL_EL0`) of **the EL1 physical timer**. See [here](https://developer.arm.com/docs/ddi0595/latest/aarch64-system-registers/cntp_ctl_el0) for the register definition. 
+
+Note: some students observed that if at the time of writing to CNTP_CTL_EL0 the timer firing condition is met (i.e. TVAL is a negative value), an interrupt will be fired immediately. 
+If you experience the same thing, you should omit the spurious interrupt.
 
 > How to interpret the register name "CNTP_CTL_EL0": 
 >

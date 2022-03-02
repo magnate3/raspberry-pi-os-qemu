@@ -593,7 +593,7 @@ Next, we are going to copy the whole user region to the new address space (in th
     set_pgd(current->mm.pgd);
 ```
 
-Finally, we call [set_pgd](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/utils.S#L24), which updates `ttbr0_el1` register and thus activate cu4rrent process translation tables.
+Finally, we call [set_pgd](https://github.com/s-matyukevich/raspberry-pi-os/blob/master/src/lesson06/src/utils.S#L24), which updates `ttbr0_el1` register and thus activates the current process translation tables.
 
 ### Aside: TLB 
 
