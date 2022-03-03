@@ -105,23 +105,22 @@ el1_entry:
 
 	br 	x2
 
-	// Allocate one PGD and one PUD for a given virt addr. Link the PGD to the PUD. 
-	//
-	// @tbl: a regsiter pointing to the last pgtable in a memory region, from which pgtables 
-	//			are allocated sequentially
+	// Given a virt addr and the PGD, set the PGD entry, allocate one PUD and one PMD.
+	//		link PGD -> PUD and PUD -> PMD
+	// @tbl: a register pointing to PGD
 	// @virt: the virtual address that we are currently mapping
 	// @tmp1/2: temporary registers to use; contents will be clobbered 
 	.macro	create_pgd_entry, tbl, virt, tmp1, tmp2
-	create_table_entry \tbl, \virt, PGD_SHIFT, \tmp1, \tmp2
-	// @tbl now points to the newly created PGD table
-	create_table_entry \tbl, \virt, PUD_SHIFT, \tmp1, \tmp2
+	create_table_entry \tbl, \virt, PGD_SHIFT, \tmp1, \tmp2  // set a PGD entry
 	// @tbl now points to the newly created PUD table
+	create_table_entry \tbl, \virt, PUD_SHIFT, \tmp1, \tmp2		// set a PUD entry
+	// @tbl now points to the newly created PMD table
 	.endm
 
 	// Allocating a new page table (either PGD or PUD) for the kernel's initial page tables
 	// All the initial page tables are located in one continuous memory region
 	//
-	// @tbl: a regsiter pointing to the last pgtable in a memory region, from which pgtables 
+	// @tbl: a register pointing to the last pgtable in a memory region, from which pgtables 
 	//			are allocated sequentially
 	// @virt: the virtual address that we are currently mapping
 	// @shift: 39 in case of PGD and 30 in case of PUD
@@ -130,7 +129,7 @@ el1_entry:
 	.macro	create_table_entry, tbl, virt, shift, tmp1, tmp2
 	lsr	\tmp1, \virt, #\shift
 	and	\tmp1, \tmp1, #PTRS_PER_TABLE - 1		// tmp1: table index
-	add	\tmp2, \tbl, #PAGE_SIZE					// tmp2: addr of a next level pagetable. 
+	add	\tmp2, \tbl, #PAGE_SIZE					// tmp2: addr of a next level pgtable (PUD or PMD). 
 	orr	\tmp2, \tmp2, #MM_TYPE_PAGE_TABLE		// tmp2: make a table descriptor. set bits[0:1] to 1. 
 	str	\tmp2, [\tbl, \tmp1, lsl #3]			// store descriptor (tmp2) to the current pgtable at index (tmp1)
 	add	\tbl, \tbl, #PAGE_SIZE					// point @tbl to the newly create next level pgtable. programming ease
@@ -186,18 +185,18 @@ __create_page_tables:
 	mov		x1, #PG_DIR_SIZE
 	bl 		memzero
 
-	// allocate one PGD & one PUD and link them
+	// allocate one PUD & one PMD; link PGD (pg_dir)->PUD, and PUD->PMD
 	adrp	x0, pg_dir
 	mov		x1, #VA_START 
-	create_pgd_entry x0, x1, x2, x3		// after this, x0 points to the new PUD table
+	create_pgd_entry x0, x1, x2, x3		// after this, x0 points to the new PMD table
 
-	/* Mapping kernel and init stack*/
+	/* Mapping kernel and init stack. Phys addr range: 0--DEVICE_BASE */
 	mov 	x1, xzr				// x1 = starting phys addr. set x1 to 0. 
 	mov 	x2, #VA_START		// x2 = the virtual base of the first section
 	ldr		x3, =(VA_START + DEVICE_BASE - SECTION_SIZE)  // x3 = the virtual base of the last section
 	create_block_map x0, x1, x2, x3, MMU_FLAGS, x4
 
-	/* Mapping device memory*/
+	/* Mapping device memory. Phys addr range: DEVICE_BASE--PHYS_MEMORY_SIZE(0x40000000) */
 	mov 	x1, #DEVICE_BASE					// x1 = start mapping from device base address 
 	ldr 	x2, =(VA_START + DEVICE_BASE)				// x2 = first virtual address
 	ldr		x3, =(VA_START + PHYS_MEMORY_SIZE - SECTION_SIZE)	// x3 = the virtual base of the last section
