@@ -4,8 +4,8 @@ boot.S
 
 
 ```
-root@ubuntu:~/arm/raspberry-pi3-mini-os/2.exception_level/el_1# cat boot.S 
-#include "arm_v8/sysregs.h"
+root@ubuntu:~/arm/p1-kernel/src/lesson02# cat src/boot.S 
+#include "arm/sysregs.h"
 
 #include "mm.h"
 
