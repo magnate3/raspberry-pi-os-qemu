@@ -1,6 +1,6 @@
 ## boot.S
 
-boot.S is copy from [raspberry-pi-os/exercises/lesson03/3/bl4ckout31/src/boot.S](https://github.com/fxlin/p1-kernel/tree/master/src/lesson02)
+boot.S  
 
 
 ```
